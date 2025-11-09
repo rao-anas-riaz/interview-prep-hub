@@ -31,7 +31,7 @@ interface QuestionListProps {
   category: QuestionCategory | null;
   isLoading: boolean;
   activeQuestionId: string | null;
-  onQuestionSelect: (id: string | null) => void;
+  onQuestionSelect: (id: string) => void;
 }
 
 const QuestionList: React.FC<QuestionListProps> = ({ category, isLoading, activeQuestionId, onQuestionSelect }) => {
@@ -93,7 +93,7 @@ const QuestionList: React.FC<QuestionListProps> = ({ category, isLoading, active
           <>
             <div className="flex items-center p-2 border-b border-slate-800 bg-slate-950 sticky top-0 z-10">
               <button 
-                onClick={() => onQuestionSelect(null)} 
+                onClick={() => window.history.back()} 
                 className="flex items-center gap-2 text-slate-300 hover:text-white px-3 py-2 rounded-lg hover:bg-slate-800 transition-colors"
               >
                 <i className="fas fa-arrow-left"></i>

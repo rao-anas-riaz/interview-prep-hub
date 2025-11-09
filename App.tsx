@@ -26,6 +26,18 @@ const App: React.FC = () => {
   const allQuestionsLoaded = useRef(false);
 
   useEffect(() => {
+    const handlePopState = (event: PopStateEvent) => {
+      const state = event.state || {};
+      setActiveCategoryId(state.categoryId || null);
+      setActiveQuestionId(state.questionId || null);
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, []);
+
+  useEffect(() => {
     const loadData = async (categoryId: string) => {
       setIsLoadingCategory(true);
       setActiveCategoryData(null);
@@ -48,6 +60,8 @@ const App: React.FC = () => {
   }, [activeCategoryId]);
 
   const handleSetCategory = useCallback((categoryId: string | null) => {
+    const state = { categoryId, questionId: null };
+    window.history.pushState(state, '');
     setActiveCategoryId(categoryId);
     setActiveQuestionId(null);
     setSearchTerm('');
@@ -55,13 +69,13 @@ const App: React.FC = () => {
   }, []);
 
   const handleQuestionSelect = useCallback((questionId: string, categoryId: string) => {
-    if (activeCategoryId !== categoryId) {
-       setActiveCategoryId(categoryId);
-    }
+    const state = { categoryId, questionId };
+    window.history.pushState(state, '');
+    setActiveCategoryId(categoryId);
     setActiveQuestionId(questionId);
     setSearchTerm('');
     setIsMobileSidebarOpen(false);
-  }, [activeCategoryId]);
+  }, []);
   
   const handleSearchTermChange = async (term: string) => {
     setSearchTerm(term);
@@ -125,7 +139,11 @@ const App: React.FC = () => {
                 category={activeCategoryData}
                 isLoading={isLoadingCategory}
                 activeQuestionId={activeQuestionId}
-                onQuestionSelect={(qId) => setActiveQuestionId(qId)}
+                onQuestionSelect={(qId) => {
+                  if (activeCategoryId) {
+                    handleQuestionSelect(qId, activeCategoryId);
+                  }
+                }}
               />
            )}
         </div>
