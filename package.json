@@ -9,6 +9,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@google/genai": "^1.29.0",
+    "framer-motion": "^11.3.19",
     "react-dom": "^19.2.0",
     "react": "^19.2.0",
     "react-syntax-highlighter": "^16.1.0"
