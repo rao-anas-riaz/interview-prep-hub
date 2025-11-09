@@ -1,0 +1,55 @@
+import { QuestionCategory } from '../types';
+
+const pysparkCategory: QuestionCategory = {
+    id: 'pyspark',
+    title: 'PySpark',
+    icon: 'fa-bolt',
+    description: "Questions on big data processing with Apache Spark's Python API, focusing on distributed data structures, performance, and execution models.",
+    questions: [
+        {
+            id: 'pyspark-1',
+            question: 'What are the differences between RDDs, DataFrames, and Datasets in PySpark?',
+            concepts: '**Resilient Distributed Dataset (RDD)**: Spark\'s original, low-level API. An immutable, distributed collection of objects.\n**DataFrame**: A higher-level API built on RDDs that organizes data into a distributed collection of named columns, similar to a relational table.\n**Catalyst Optimizer**: Spark\'s advanced query optimizer that creates efficient execution plans for DataFrame operations.',
+            answer: 'This represents the evolution of Spark\'s APIs:\n- **RDD**: The original, low-level abstraction. It is schema-less and offers flexibility but lacks the performance optimizations of newer APIs. You manipulate data with functional transformations like `map()` and `filter()`.\n- **DataFrame**: The most common API in PySpark. It imposes a schema (a structure of named columns) on the data. This structure allows Spark\'s **Catalyst Optimizer** to analyze your code, understand your intent, and create a highly optimized physical execution plan. It is significantly faster than RDDs for most structured data operations.\n- **Dataset**: A typed API, mainly used in Scala/Java. It combines the type-safety of RDDs with the performance benefits of DataFrames. In PySpark, due to Python\'s dynamic nature, DataFrames are the standard and are essentially a collection of `Row` objects (untyped).',
+            example: 'Think of an **RDD** as a list of generic Python objects distributed across a cluster. A **DataFrame** is like a distributed pandas DataFrame or a SQL table; you can run optimized queries on it like `df.select("name").where(df.age > 21)`.'
+        },
+        {
+            id: 'pyspark-2',
+            question: 'How do Spark’s lazy evaluation and the DAG (Directed Acyclic Graph) execution model work?',
+            concepts: '**Lazy Evaluation**: An evaluation strategy that delays the evaluation of an expression until its value is needed.\n**Transformation**: A Spark operation (e.g., `select`, `filter`, `groupBy`) that creates a new DataFrame from an existing one.\n**Action**: A Spark operation (e.g., `count`, `collect`, `save`) that triggers computation and returns a value to the driver or writes to storage.\n**DAG (Directed Acyclic Graph)**: A graph representing the sequence of transformations to be executed.',
+            answer: 'Spark\'s efficiency comes from not executing operations immediately.\n1.  **Lazy Evaluation**: When you apply a **transformation** to a DataFrame, Spark does not compute the result right away. Instead, it adds that operation to a logical plan.\n2.  **DAG Creation**: This plan is represented as a **DAG**, where each node is a transformation and the edges represent the data dependency between them.\n3.  **Action Triggers Execution**: The entire DAG is only executed when you call an **action**. At this point, the Catalyst Optimizer analyzes the DAG, creates the most efficient physical execution plan, and runs the job on the cluster.',
+            example: 'If you have `df.filter(...).select(...).groupBy(...)`, none of this code runs. Spark just builds a plan (the DAG). Only when you call `.count()` (an action) does Spark figure out the best way to execute the entire sequence, potentially combining filters or pushing them down to the data source to minimize I/O.'
+        },
+        {
+            id: 'pyspark-3',
+            question: 'How can you optimize performance in PySpark jobs?',
+            concepts: '**Caching/Persistence**: Storing the results of an intermediate DataFrame in memory to avoid recomputation.\n**Partitioning**: Dividing data across the cluster to enable parallelism.\n**Shuffling**: The expensive process of redistributing data across partitions, often required by operations like `groupBy` or joins.',
+            answer: 'Several key techniques are crucial for performance:\n- **Caching (`.cache()` or `.persist()`)**: If you use a DataFrame multiple times, cache it in memory to avoid recomputing it from scratch each time.\n- **Minimize Shuffles**: Shuffles are very expensive as they move data across the network. Try to use transformations that avoid them where possible (e.g., use broadcast joins for small tables).\n- **Proper Partitioning**: Ensure your data is well-distributed across partitions to maximize parallelism. Use `repartition()` or `coalesce()` to adjust partition numbers.\n- **Use Built-in Functions**: Avoid Python UDFs (User-Defined Functions) when possible. Spark\'s built-in SQL functions are written in Scala/Java and operate directly within the JVM, avoiding the serialization overhead of UDFs.\n- **Choose the Right File Format**: Use efficient columnar formats like **Parquet** or **ORC**, which support predicate pushdown and compression.',
+            example: 'A common pattern is: `df = spark.read.parquet(...)` -> `df_transformed = df.some_transformations()` -> `df_transformed.cache()` -> `df_transformed.count()` -> `df_transformed.write.parquet(...)`. The `.cache()` call prevents `df_transformed` from being recomputed for the `count` and `write` actions.'
+        },
+        {
+            id: 'pyspark-4',
+            question: 'How do you handle data skew or imbalanced joins in PySpark?',
+            concepts: '**Data Skew**: A condition in which the data is unevenly distributed among partitions in a cluster. This leads to some tasks taking much longer than others, creating a bottleneck.\n**Salting**: A technique to redistribute skewed data by adding a random key to spread it across more partitions.',
+            answer: 'Data skew can cripple a Spark job, especially during joins or aggregations where one key has a disproportionately large number of records.\n- **Identify Skew**: You can often detect skew by looking at the Spark UI and seeing a few tasks taking much longer than others for a given stage.\n- **Salting**: This is a common technique. For the skewed key, append a random number (a "salt") from a fixed range (e.g., 1 to 10). Do the same on the other DataFrame by exploding the corresponding key into 10 rows with the same salt range. This effectively splits the skewed key into 10 sub-keys, which Spark can then process in parallel.\n- **Broadcast Joins**: If one of the tables in a join is small enough to fit in memory on each executor, you can broadcast it. This avoids a shuffle entirely and is highly effective against skew.',
+            example: 'Imagine joining user activity with user profiles, but one `user_id` (e.g., a guest user) accounts for 50% of the activity. By "salting" this `user_id`, you can break that single massive partition into multiple smaller partitions, balancing the workload across the cluster.'
+        },
+        {
+            id: 'pyspark-5',
+            question: 'Explain broadcast variables - what are they and when would you use them?',
+            concepts: '**Broadcast Variable**: A mechanism for sharing a read-only variable from the driver to all the executors on the cluster efficiently.\n**Driver vs. Executor**: The driver is the master node that coordinates the Spark job. Executors are worker nodes that perform the actual tasks.',
+            answer: 'Normally, when a variable from the driver program is used in a transformation, Spark ships a copy of that variable with every single task. This can be very inefficient if the variable is large.\n\nA **broadcast variable** is a more efficient way to share a large, read-only piece of data (like a lookup dictionary or a small DataFrame) with all worker nodes.\n1. The driver serializes the variable and sends it to each executor **only once**.\n2. The data is then cached on each executor, and all tasks running on that executor can access it without it being re-sent over the network.\n\n**Use Case**: The classic use case is a **broadcast join**, where you join a large DataFrame with a much smaller one. You collect the small DataFrame to the driver, broadcast it, and then use a UDF to perform the join, avoiding a costly shuffle.',
+            example: '---CODE_START---python\n# small_lookup_map is a Python dictionary\n# Broadcast it so it\'s available on all executors efficiently\nbroadcast_map = spark.sparkContext.broadcast(small_lookup_map)\n\ndef my_udf(key):\n    # Access the broadcasted value\n    return broadcast_map.value.get(key, "default")\n\n# Now use this UDF in a DataFrame transformation\n# df.withColumn("mapped_value", my_udf(df["key"]))\n---CODE_END---'
+        },
+        {
+            id: 'pyspark-6',
+            question: 'Can you walk me through how to implement a PySpark transformation using a custom UDF?',
+            concepts: '**UDF (User-Defined Function)**: A function defined by a user that can be used in Spark SQL or DataFrame operations to perform custom logic.\n**Serialization**: The process of converting Python objects into a format that can be transferred over the network to the JVM on the executors.',
+            // FIX: Merged the two 'answer' properties into one.
+            answer: 'While it\'s best to use built-in functions for performance, sometimes you need custom logic that they don\'t provide. A UDF allows you to apply a regular Python function to your DataFrame columns.\n\nHere is the process:\n1.  **Define a Python function**: Write a standard Python function that takes one or more arguments and returns a single value.\n2.  **Create the UDF**: Use `pyspark.sql.functions.udf()` to wrap your Python function. You must specify the return data type (e.g., `StringType()`, `IntegerType()`).\n3.  **Apply the UDF**: Call the created UDF object like a regular Spark function, passing DataFrame columns as arguments.\n\n**Warning**: UDFs have a performance cost. Spark has to serialize the data from the JVM, send it to a Python process, run your function, and then serialize the result back to the JVM. This overhead can be significant. Always try to use built-in functions first.',
+            example: '---CODE_START---python\nfrom pyspark.sql.functions import udf\nfrom pyspark.sql.types import StringType\n\n# 1. Define a regular Python function\ndef categorize_length(text):\n    if len(text) < 10:\n        return "short"\n    elif len(text) < 20:\n        return "medium"\n    else:\n        return "long"\n\n# 2. Create the UDF, specifying its return type\ncategorize_udf = udf(categorize_length, StringType())\n\n# Assume \'df\' has a column named "review_text"\n# 3. Apply the UDF to create a new column\ndf_with_category = df.withColumn("text_length_category", categorize_udf(df["review_text"]))\n\ndf_with_category.show()\n---CODE_END---'
+        }
+    ]
+};
+
+export default pysparkCategory;
