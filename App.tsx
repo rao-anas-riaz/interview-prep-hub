@@ -19,7 +19,6 @@ const App: React.FC = () => {
   const [activeCategoryData, setActiveCategoryData] = useState<QuestionCategory | null>(null);
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isLoadingCategory, setIsLoadingCategory] = useState(false);
   
@@ -47,10 +46,6 @@ const App: React.FC = () => {
       setActiveCategoryData(null);
     }
   }, [activeCategoryId]);
-
-  const toggleSidebar = useCallback(() => {
-    setIsSidebarCollapsed(prev => !prev);
-  }, []);
 
   const handleSetCategory = useCallback((categoryId: string | null) => {
     setActiveCategoryId(categoryId);
@@ -97,7 +92,6 @@ const App: React.FC = () => {
   }, [activeCategoryId]);
 
   const showDashboard = !activeCategoryId && searchTerm.trim().length === 0;
-  const mainContentPadding = isSidebarCollapsed ? 'lg:pl-16' : 'lg:pl-72';
 
   return (
     <div className="h-screen w-full flex bg-slate-900 text-slate-300 font-sans relative overflow-hidden">
@@ -106,8 +100,6 @@ const App: React.FC = () => {
         categories={categories}
         activeCategoryId={activeCategoryId}
         onCategoryClick={handleSetCategory}
-        isCollapsed={isSidebarCollapsed}
-        onToggleCollapse={toggleSidebar}
         isMobileOpen={isMobileSidebarOpen}
         onMobileClose={() => setIsMobileSidebarOpen(false)}
       />
@@ -115,8 +107,8 @@ const App: React.FC = () => {
         onMenuClick={() => setIsMobileSidebarOpen(true)}
         categoryTitle={activeCategoryMetadata?.title}
       />
-      <main className={`flex-1 h-screen overflow-y-auto transition-all duration-300 ${mainContentPadding} pt-16 lg:pt-0`}>
-        <div className={`w-full ${showDashboard ? 'p-4 sm:p-6 lg:p-8' : 'h-full'}`}>
+      <main className={`flex-1 h-screen overflow-y-auto pt-16`}>
+        <div className={`w-full ${showDashboard ? 'p-4' : 'h-full'}`}>
            {activeCategoryId === null ? (
              <Dashboard 
                 categories={categories} 

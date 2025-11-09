@@ -25,8 +25,8 @@ const Dashboard: React.FC<DashboardProps> = ({ categories, onCategoryClick, sear
 
   return (
     <div className="max-w-7xl mx-auto fade-in">
-      <div className="mb-6 md:mb-10 text-center">
-        <h1 className="text-4xl md:text-6xl font-extrabold text-white font-sora">
+      <div className="mb-6 text-center">
+        <h1 className="text-4xl font-extrabold text-white font-sora">
           <AnimatedRainbowText>Interview Prep Hub</AnimatedRainbowText>
         </h1>
         <p className="mt-4 text-lg text-slate-400 max-w-2xl mx-auto">
@@ -41,7 +41,7 @@ const Dashboard: React.FC<DashboardProps> = ({ categories, onCategoryClick, sear
               type="search"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="bg-slate-800/80 border border-slate-700 text-slate-200 text-md rounded-full focus:ring-2 focus:ring-sky-500 focus:border-sky-500 block w-full p-3 sm:p-4 placeholder-slate-500"
+              className="bg-slate-800/80 border border-slate-700 text-slate-200 text-md rounded-full focus:ring-2 focus:ring-sky-500 focus:border-sky-500 block w-full p-3 placeholder-slate-500"
               placeholder="Search all questions (e.g., 'SQL joins', 'overfitting')..."
             />
           </div>
@@ -93,7 +93,7 @@ const Dashboard: React.FC<DashboardProps> = ({ categories, onCategoryClick, sear
       ) : (
         <div className="fade-in-delay">
           <h2 className="text-xl font-bold text-center text-white mb-6 font-lexend">Browse by Category</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 gap-6">
             {categories.map((category) => (
               <SpotlightCard 
                 key={category.id} 

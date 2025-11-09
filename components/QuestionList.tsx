@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, memo } from 'react';
+import React, { useEffect, useRef, memo } from 'react';
 import { QuestionCategory, InterviewQuestion } from '../types';
 import QuestionDetail from './QuestionDetail';
 
@@ -6,27 +6,23 @@ interface QuestionListItemProps {
   question: InterviewQuestion;
   index: number;
   isActive: boolean;
-  isPanelCollapsed: boolean;
   onSelect: (id: string) => void;
 }
 
-const QuestionListItem: React.FC<QuestionListItemProps> = memo(({ question, index, isActive, isPanelCollapsed, onSelect }) => {
+const QuestionListItem: React.FC<QuestionListItemProps> = memo(({ question, index, isActive, onSelect }) => {
   return (
     <button
       onClick={() => onSelect(question.id)}
       className={`w-full text-left p-4 text-sm font-medium border-l-4 transition-colors duration-150 flex items-start gap-3 ${
-        isPanelCollapsed ? 'justify-center' : ''
-      } ${
         isActive
           ? 'bg-slate-800 border-sky-500 text-white'
           : `border-transparent text-slate-300 hover:bg-slate-800/50 hover:text-slate-100 ${
               !isActive && index % 2 !== 0 ? 'bg-slate-900' : ''
             }`
       }`}
-      title={isPanelCollapsed ? question.question : ''}
     >
       <span className={`font-mono text-xs pt-1 ${isActive ? 'text-sky-400' : 'text-slate-400'}`}>{index + 1}.</span>
-      {!isPanelCollapsed && <span className="flex-1">{question.question}</span>}
+      <span className="flex-1">{question.question}</span>
     </button>
   );
 });
@@ -39,33 +35,13 @@ interface QuestionListProps {
 }
 
 const QuestionList: React.FC<QuestionListProps> = ({ category, isLoading, activeQuestionId, onQuestionSelect }) => {
-  const [isPanelCollapsed, setIsPanelCollapsed] = useState(false);
-  const [isMobileView, setIsMobileView] = useState(window.innerWidth < 768);
   const detailPanelRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleResize = () => setIsMobileView(window.innerWidth < 768);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  const activeQuestion = category?.questions.find(q => q.id === activeQuestionId) || null;
-  
-  useEffect(() => {
-    if (category && !activeQuestionId && category.questions.length > 0 && !isMobileView) {
-      onQuestionSelect(category.questions[0].id);
-    }
-  }, [activeQuestionId, category, onQuestionSelect, isMobileView]);
   
   useEffect(() => {
     if (detailPanelRef.current) {
       detailPanelRef.current.scrollTop = 0;
     }
   }, [activeQuestionId]);
-
-  const togglePanel = () => {
-    setIsPanelCollapsed(prev => !prev);
-  };
   
   if (isLoading) {
       return (
@@ -88,25 +64,16 @@ const QuestionList: React.FC<QuestionListProps> = ({ category, isLoading, active
     )
   }
 
-  const showList = !isMobileView || (isMobileView && !activeQuestionId);
-  const showDetail = !isMobileView || (isMobileView && !!activeQuestionId);
+  const showList = !activeQuestionId;
+  const showDetail = !!activeQuestionId;
 
   return (
-    <div className="h-full md:flex fade-in">
-      <div className={`h-full bg-slate-950 border-r border-slate-800 flex-col transition-all duration-300 
-        ${isPanelCollapsed ? 'md:w-16' : 'md:w-72'} 
-        ${showList ? 'flex w-full' : 'hidden md:flex'}`
-      }>
-        <div className={`px-4 border-b border-slate-800 flex-shrink-0 h-16 flex items-center ${isPanelCollapsed ? 'justify-center' : ''}`}>
-          {!isPanelCollapsed ? (
+    <div className="h-full flex fade-in">
+      <div className={`h-full bg-slate-950 flex-col w-full ${showList ? 'flex' : 'hidden'}`}>
+        <div className={`px-4 border-b border-slate-800 flex-shrink-0 h-16 flex items-center`}>
             <span className="bg-slate-800 text-slate-400 text-xs font-semibold px-2.5 py-1 rounded-full uppercase tracking-wider">
               {category.questions.length} Questions
             </span>
-          ) : (
-             <div className="flex justify-center">
-                <i className={`fas ${category.icon} text-2xl text-sky-400`} title={category.title}></i>
-            </div>
-          )}
         </div>
         <div className="overflow-y-auto flex-grow">
           {category.questions.map((question, index) => (
@@ -115,26 +82,16 @@ const QuestionList: React.FC<QuestionListProps> = ({ category, isLoading, active
               question={question}
               index={index}
               isActive={activeQuestionId === question.id}
-              isPanelCollapsed={isPanelCollapsed}
               onSelect={onQuestionSelect}
             />
           ))}
         </div>
-         <div className={`h-16 p-2 border-t border-slate-800 items-center justify-center flex-shrink-0 ${isMobileView ? 'hidden' : 'flex'}`}>
-            <button
-              onClick={togglePanel}
-              className="w-full h-full flex items-center justify-center text-slate-400 rounded-lg hover:bg-slate-700/50 hover:text-slate-200 transition-colors"
-              aria-label={isPanelCollapsed ? "Expand questions panel" : "Collapse questions panel"}
-            >
-              <i className={`fas ${isPanelCollapsed ? 'fa-angles-right' : 'fa-angles-left'} text-lg`}></i>
-            </button>
-        </div>
       </div>
 
-      <div ref={detailPanelRef} className={`flex-1 h-full overflow-y-auto ${showDetail ? 'block' : 'hidden md:block'}`}>
-        {activeQuestion ? (
+      <div ref={detailPanelRef} className={`flex-1 h-full overflow-y-auto ${showDetail ? 'block' : 'hidden'}`}>
+        {activeQuestionId && category.questions.find(q => q.id === activeQuestionId) ? (
           <>
-            <div className="md:hidden flex items-center p-2 border-b border-slate-800 bg-slate-950 sticky top-0 z-10">
+            <div className="flex items-center p-2 border-b border-slate-800 bg-slate-950 sticky top-0 z-10">
               <button 
                 onClick={() => onQuestionSelect(null)} 
                 className="flex items-center gap-2 text-slate-300 hover:text-white px-3 py-2 rounded-lg hover:bg-slate-800 transition-colors"
@@ -143,7 +100,7 @@ const QuestionList: React.FC<QuestionListProps> = ({ category, isLoading, active
                 Back to Questions
               </button>
             </div>
-            <QuestionDetail question={activeQuestion} />
+            <QuestionDetail question={category.questions.find(q => q.id === activeQuestionId)!} />
           </>
         ) : (
           <div className="flex items-center justify-center h-full">

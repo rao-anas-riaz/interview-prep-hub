@@ -6,8 +6,6 @@ interface SidebarProps {
   categories: QuestionCategoryMetadata[];
   activeCategoryId: string | null;
   onCategoryClick: (id: string | null) => void;
-  isCollapsed: boolean;
-  onToggleCollapse: () => void;
   isMobileOpen: boolean;
   onMobileClose: () => void;
 }
@@ -16,9 +14,8 @@ const NavItem: React.FC<{
   category: QuestionCategoryMetadata;
   isActive: boolean;
   onClick: (id: string) => void;
-  isCollapsed: boolean;
   index: number;
-}> = memo(({ category, isActive, onClick, isCollapsed, index }) => (
+}> = memo(({ category, isActive, onClick, index }) => (
   <li>
     <a
       href="#"
@@ -26,35 +23,32 @@ const NavItem: React.FC<{
         e.preventDefault();
         onClick(category.id);
       }}
-      className={`flex items-center py-2.5 text-sm font-medium rounded-lg transition-all duration-200 group ${
-        isCollapsed ? 'px-3 justify-center' : 'px-3 hover:translate-x-1'
-      } ${
+      className={`flex items-center py-2.5 text-sm font-medium rounded-lg transition-all duration-200 group px-3 hover:translate-x-1 ${
         isActive
           ? 'bg-sky-500/10 text-sky-300'
           : `text-slate-400 hover:bg-slate-700/50 hover:text-slate-200 ${
               index % 2 !== 0 ? 'bg-slate-900' : ''
             }`
       }`}
-      title={isCollapsed ? category.title : ''}
     >
       <i className={`fas ${category.icon} w-6 h-6 text-center text-lg transition duration-75 ${isActive ? 'text-sky-400' : 'text-slate-500 group-hover:text-slate-400'}`}></i>
-      {!isCollapsed && <span className="ml-3 whitespace-nowrap">{category.title}</span>}
+      <span className="ml-3 whitespace-nowrap">{category.title}</span>
     </a>
   </li>
 ));
 
-const Sidebar: React.FC<SidebarProps> = ({ categories, activeCategoryId, onCategoryClick, isCollapsed, onToggleCollapse, isMobileOpen, onMobileClose }) => {
+const Sidebar: React.FC<SidebarProps> = ({ categories, activeCategoryId, onCategoryClick, isMobileOpen, onMobileClose }) => {
   return (
     <>
       {/* Mobile overlay */}
       <div
         onClick={onMobileClose}
-        className={`lg:hidden fixed inset-0 bg-slate-900/60 z-40 transition-opacity duration-300 ${isMobileOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+        className={`fixed inset-0 bg-slate-900/60 z-40 transition-opacity duration-300 ${isMobileOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
         aria-hidden="true"
       />
 
-      {/* Mobile Sidebar */}
-      <aside className={`lg:hidden fixed top-0 left-0 z-50 h-screen w-72 bg-slate-950 border-r border-slate-800 flex flex-col transition-transform duration-300 ease-in-out ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      {/* Sidebar */}
+      <aside className={`fixed top-0 left-0 z-50 h-screen w-72 bg-slate-950 border-r border-slate-800 flex flex-col transition-transform duration-300 ease-in-out ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'}`}>
          <div className="flex items-center justify-center p-4 border-b border-slate-800 h-16 flex-shrink-0">
            <button onClick={() => onCategoryClick(null)} className="flex items-center group px-4 py-2 rounded-lg transition-colors">
               <h1 className="text-xl font-bold font-lexend">
@@ -66,65 +60,9 @@ const Sidebar: React.FC<SidebarProps> = ({ categories, activeCategoryId, onCateg
           <h2 className="px-3 pb-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">Categories</h2>
           <ul className="space-y-1.5">
             {categories.map((cat, index) => (
-              <NavItem key={cat.id} category={cat} isActive={activeCategoryId === cat.id} onClick={() => onCategoryClick(cat.id)} isCollapsed={false} index={index} />
+              <NavItem key={cat.id} category={cat} isActive={activeCategoryId === cat.id} onClick={() => onCategoryClick(cat.id)} index={index} />
             ))}
           </ul>
-        </div>
-      </aside>
-
-      {/* Desktop Sidebar */}
-      <aside
-        className={`hidden lg:flex fixed top-0 left-0 z-40 h-screen bg-slate-950 border-r border-slate-800 flex-col transition-all duration-300 ${isCollapsed ? 'w-16' : 'w-72'}`}
-        aria-label="Sidebar"
-      >
-        <div className={`flex items-center px-4 border-b border-slate-800 h-16 ${isCollapsed ? 'justify-center' : 'justify-between'}`}>
-          <button onClick={() => onCategoryClick(null)} className="flex items-center group">
-            {!isCollapsed && 
-              <h1 className="text-lg font-bold font-lexend">
-                <AnimatedRainbowText>Curated by Anas Riaz</AnimatedRainbowText>
-              </h1>
-            }
-            {isCollapsed && <i className="fas fa-book-reader text-2xl text-sky-400 group-hover:text-sky-300" title="Interview Prep Hub"></i>}
-          </button>
-          {!isCollapsed && (
-            <div className="flex items-center space-x-3 text-slate-400">
-              <a href="https://github.com/rao-anas-riaz" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-all transform hover:scale-110">
-                <i className="fab fa-github text-lg"></i>
-              </a>
-              <a href="https://www.linkedin.com/in/raoanasriaz/" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-all transform hover:scale-110">
-                <i className="fab fa-linkedin text-lg"></i>
-              </a>
-              <a href="mailto:raoanasriaz@gmail.com" className="hover:text-white transition-all transform hover:scale-110">
-                <i className="fas fa-envelope text-lg"></i>
-              </a>
-            </div>
-          )}
-        </div>
-        
-        <div className="flex-grow overflow-y-auto px-4 py-4">
-          {!isCollapsed && <h2 className="px-3 pb-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">Categories</h2>}
-          <ul className="space-y-1.5">
-            {categories.map((cat, index) => (
-              <NavItem
-                key={cat.id}
-                category={cat}
-                isActive={activeCategoryId === cat.id}
-                onClick={() => onCategoryClick(cat.id)}
-                isCollapsed={isCollapsed}
-                index={index}
-              />
-            ))}
-          </ul>
-        </div>
-
-        <div className="h-16 p-2 border-t border-slate-800 flex items-center justify-center flex-shrink-0">
-          <button
-            onClick={onToggleCollapse}
-            className="w-full h-full flex items-center justify-center text-slate-400 rounded-lg hover:bg-slate-700/50 hover:text-slate-200 transition-colors"
-            aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-          >
-            <i className={`fas ${isCollapsed ? 'fa-angles-right' : 'fa-angles-left'} text-lg`}></i>
-          </button>
         </div>
       </aside>
     </>

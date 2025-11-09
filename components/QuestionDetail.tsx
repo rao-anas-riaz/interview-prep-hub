@@ -79,8 +79,8 @@ const QuestionDetail: React.FC<QuestionDetailProps> = ({ question }) => {
   };
 
   return (
-    <div className="p-6 md:p-8 fade-in">
-      <h1 className="text-2xl md:text-3xl font-extrabold text-white mb-8 font-lexend">{question.question}</h1>
+    <div className="p-6 fade-in">
+      <h1 className="text-2xl font-extrabold text-white mb-8 font-lexend">{question.question}</h1>
 
       <div className="space-y-6">
           <DetailSection title="Core Concepts">

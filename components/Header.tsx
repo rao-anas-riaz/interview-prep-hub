@@ -10,7 +10,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick, categoryTitle }) => {
   const title = categoryTitle || 'Curated by Anas Riaz';
   
   return (
-    <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-slate-950/80 backdrop-blur-sm border-b border-slate-800 flex items-center justify-between px-4 z-30">
+    <header className="fixed top-0 left-0 right-0 h-16 bg-slate-950/80 backdrop-blur-sm border-b border-slate-800 flex items-center justify-between px-4 z-30">
       {/* Left section */}
       <div className="flex-1 flex justify-start">
         <button onClick={onMenuClick} className="text-slate-300 hover:text-white transition-colors p-2 -ml-2">
