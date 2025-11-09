@@ -7,7 +7,9 @@ interface CardProps {
 }
 
 const Card: React.FC<CardProps> = ({ children, className = '', onClick }) => {
-  const interactiveClasses = onClick ? 'transition-all duration-300 hover:border-sky-500/30 hover:bg-slate-800/30' : '';
+  const interactiveClasses = onClick 
+    ? 'transition-all duration-300 hover:border-sky-500 hover:bg-slate-800/30 hover:scale-[1.02] hover:shadow-lg hover:shadow-sky-500/10' 
+    : '';
 
   return (
     <div

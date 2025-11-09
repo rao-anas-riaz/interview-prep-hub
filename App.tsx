@@ -6,6 +6,7 @@ import QuestionList from './components/QuestionList';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import { InterviewQuestion, QuestionCategory, QuestionCategoryMetadata } from './types';
+import IridescenceBackground from './components/ui/IridescenceBackground';
 
 interface QuestionWithCategory extends InterviewQuestion {
   categoryId: string;
@@ -95,11 +96,12 @@ const App: React.FC = () => {
     return categories.find(c => c.id === activeCategoryId) || null;
   }, [activeCategoryId]);
 
-  const showDashboard = !activeCategoryId || searchTerm.trim().length > 0;
+  const showDashboard = !activeCategoryId && searchTerm.trim().length === 0;
   const mainContentPadding = isSidebarCollapsed ? 'lg:pl-16' : 'lg:pl-72';
 
   return (
-    <div className="h-screen w-full flex bg-slate-900 text-slate-300 font-sans">
+    <div className="h-screen w-full flex bg-slate-900 text-slate-300 font-sans relative overflow-hidden">
+      <IridescenceBackground isVisible={showDashboard} />
       <Sidebar 
         categories={categories}
         activeCategoryId={activeCategoryId}
@@ -115,7 +117,7 @@ const App: React.FC = () => {
       />
       <main className={`flex-1 h-screen overflow-y-auto transition-all duration-300 ${mainContentPadding} pt-16 lg:pt-0`}>
         <div className={`w-full ${showDashboard ? 'p-4 sm:p-6 lg:p-8' : 'h-full'}`}>
-           {showDashboard ? (
+           {activeCategoryId === null ? (
              <Dashboard 
                 categories={categories} 
                 onCategoryClick={handleSetCategory}
