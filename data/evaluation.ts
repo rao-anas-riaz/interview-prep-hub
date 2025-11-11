@@ -2,10 +2,17 @@ import { QuestionCategory } from '../types';
 
 const evaluationCategory: QuestionCategory = {
     id: 'evaluation',
-    title: 'Experimentation & Evaluation',
+    title: 'Model Evaluation',
     icon: 'fa-chart-line',
-    description: 'Methods for testing hypotheses and evaluating the performance of models and products.',
+    description: 'Methods for testing hypotheses, evaluating model performance, and A/B testing.',
     questions: [
+        {
+          id: 'foundations-7',
+          question: 'What is a training set vs. a test set?',
+          concepts: '**Training Set**: The subset of data used to train a model. The model "learns" the relationships between features and the target variable from this data.\n**Test Set**: The subset of data used to provide an unbiased evaluation of a final model fit on the training dataset.',
+          answer: 'You split your data to check for **overfitting**.\n- **Training Set (~80% of data)**: The data the model **"studies"** to learn patterns.\n- **Test Set (~20% of data)**: Held-back data used for a **"final exam"** to evaluate how well the model performs on new, unseen data.\n\nThis separation is critical to ensure your model can **generalize** to real-world problems.',
+          example: 'To predict customer churn, you train your model on **800 customers (training set)**. You then evaluate its final performance on the **remaining 200 customers (test set)** to get a realistic measure of its accuracy.',
+        },
         {
             id: 'eval-1',
             question: 'What metrics would you use for imbalanced classification, and why is accuracy misleading?',
@@ -55,6 +62,20 @@ const evaluationCategory: QuestionCategory = {
             answer: 'These are two types of errors in statistical hypothesis testing, with different business consequences.\n- **Type I Error (False Positive)**: You incorrectly conclude there is an effect when there isn\'t one. The model says "Yes" when the real answer is "No".\n- **Type II Error (False Negative)**: You fail to detect an effect that is actually there. The model says "No" when the real answer is "Yes".\n\nThere is often a tradeoff: reducing one type of error may increase the other.',
             example: '**Scenario**: A model predicts if a machine part will fail.\n- **Type I Error**: The model predicts a part **will fail**, so you replace it. The part was actually fine. **Cost**: The cost of a new part and unnecessary maintenance.\n- **Type II Error**: The model predicts a part **will NOT fail**, so you leave it. The part then breaks, causing the entire assembly line to shut down. **Cost**: Catastrophic failure, massive downtime, and high repair costs.\nIn this case, a Type II error is far more costly, so you would tune the model to minimize false negatives.',
         },
+        {
+            id: 'pyds-19',
+            question: 'How do you tune hyperparameters programmatically?',
+            concepts: '**Hyperparameters**: Parameters that are not directly learned within estimators. They are passed as arguments to the constructor of the estimator classes.\n**Grid Search**: An exhaustive search over a specified parameter grid.\n**Random Search**: A search over a specified parameter space where a fixed number of parameter settings is sampled from the specified distributions.',
+            answer: 'Scikit-learn provides automated tools for this:\n- **`GridSearchCV`**: Exhaustively tries every combination of the hyperparameters you specify. It is thorough but can be very slow.\n- **`RandomizedSearchCV`**: Samples a fixed number of parameter settings from specified distributions. It is much faster than Grid Search and often finds a very good combination of parameters.\n\nBoth methods use cross-validation to evaluate the performance of each hyperparameter combination.',
+            example: '---CODE_START---python\nfrom sklearn.model_selection import RandomizedSearchCV\nfrom sklearn.ensemble import RandomForestClassifier\nfrom scipy.stats import randint\n\nparam_dist = {\'n_estimators\': randint(50, 500), \'max_depth\': randint(1, 20)}\n\n# Create a random forest classifier\nrf = RandomForestClassifier()\n\n# Use random search to find the best hyperparameters\nrand_search = RandomizedSearchCV(rf, param_distributions=param_dist, n_iter=5, cv=5)\n\n# Fit the random search object to the data (X, y)\n# rand_search.fit(X, y)\n# print(rand_search.best_params_)\n---CODE_END---'
+        },
+        {
+            id: 'pyds-20',
+            question: 'How do you evaluate ML models using Python (sklearn metrics)?',
+            concepts: '**Classification Metrics**: `accuracy_score`, `precision_score`, `recall_score`, `f1_score`, `roc_auc_score`, `confusion_matrix`.\n**Regression Metrics**: `mean_squared_error`, `mean_absolute_error`, `r2_score`.',
+            answer: 'The `sklearn.metrics` module provides a comprehensive set of functions for evaluating model performance.\nFor **classification**, you can generate a full report using `classification_report`, which includes precision, recall, and F1-score for each class. The `confusion_matrix` is also crucial for visualizing where the model is making errors.\nFor **regression**, common metrics like `mean_squared_error` (and its square root, RMSE) and `r2_score` are used to measure prediction error.',
+            example: '---CODE_START---python\nfrom sklearn.metrics import classification_report, confusion_matrix\n\ny_true = [0, 1, 0, 1, 0, 1]\ny_pred = [0, 0, 0, 1, 0, 1]\n\n# Print a text report showing the main classification metrics\nprint(classification_report(y_true, y_pred))\n\n# Compute confusion matrix\nprint(confusion_matrix(y_true, y_pred))\n---CODE_END---'
+        }
     ],
 };
 

@@ -2,9 +2,9 @@ import { QuestionCategory } from '../types';
 
 const mlopsDeploymentCategory: QuestionCategory = {
     id: 'mlops_deployment',
-    title: 'MLOps & Deployment',
+    title: 'MLOps & System Design',
     icon: 'fa-cogs',
-    description: 'Concepts for operationalizing, deploying, and maintaining machine learning models.',
+    description: 'Concepts for operationalizing, deploying, and maintaining ML models.',
     questions: [
       {
         id: 'mlops-1',
@@ -33,7 +33,21 @@ const mlopsDeploymentCategory: QuestionCategory = {
         concepts: '**Model Drift (or Concept Drift)**: The phenomenon where the statistical properties of the target variable, which the model is trying to predict, change over time in unforeseen ways. This causes the model to become less accurate as time passes.',
         answer: 'Model drift is the **degradation of a model\'s performance** over time because the real-world data it sees in production no longer matches the data it was trained on.\n\n**How to Monitor**:\n- **Data Drift**: Monitor the statistical properties (mean, median, distribution) of your input features. If the average age of your users suddenly changes, your model might be in trouble.\n- **Performance Drift**: Monitor your key model metrics (e.g., AUC, F1-score) on live data. A steady decline indicates drift.\n\n**How to Fix**: **Retrain the model** on a more recent set of data.',
         example: 'A model trained to predict house prices **before the 2020 pandemic** would perform poorly today because market dynamics (the relationship between features and price) have **drifted**. Monitoring would show a sharp increase in prediction error, signaling the need for retraining.',
-      }
+      },
+      {
+        id: 'pyds-17',
+        question: 'What is pickle and why is it used?',
+        concepts: '**Serialization**: The process of converting a data structure or object state into a format that can be stored or transmitted and reconstructed later.\n**Object Persistence**: Saving the state of an object to a storage medium.',
+        answer: '`pickle` is Python\'s standard module for object serialization. It "pickles" a Python object by converting it into a byte stream, which can be written to a file, stored in a database, or transmitted over a network.\n\nIn data science, it is most commonly used to **save trained machine learning models** to disk. You can then load this saved file later to make predictions without having to retrain the model.',
+        example: '---CODE_START---python\nimport pickle\nfrom sklearn.linear_model import LogisticRegression\n\n# Assume \'model\' is a trained sklearn model\nmodel = LogisticRegression().fit([[1],[2]], [0,1])\n\n# Save the model to a file\nwith open(\'model.pkl\', \'wb\') as f:\n    pickle.dump(model, f)\n\n# Load the model from the file\nwith open(\'model.pkl\', \'rb\') as f:\n    loaded_model = pickle.load(f)\n\nprint(loaded_model.predict([[1]]))\n---CODE_END---'
+      },
+      {
+        id: 'pyds-18',
+        question: 'How do you serialize a model in Python?',
+        concepts: '**Serialization**: Converting an object into a storable format.\n**Interoperability**: The ability of computer systems or software to exchange and make use of information.',
+        answer: 'The most common method is using the `pickle` library, as it can serialize almost any Python object. For scikit-learn models, `joblib` is often preferred as it can be more efficient for objects that carry large NumPy arrays.\n\nFor better interoperability with other languages and systems, formats like ONNX (Open Neural Network Exchange) are used, which define a common set of operators and a common file format.',
+        example: '---CODE_START---python\nfrom sklearn.ensemble import RandomForestClassifier\nimport joblib\n\n# Assume \'model\' is a trained model\nmodel = RandomForestClassifier().fit([[1],[2]], [0,1])\n\n# Save with joblib\njoblib.dump(model, \'model.joblib\')\n\n# Load with joblib\nloaded_model = joblib.load(\'model.joblib\')\n---CODE_END---'
+      },
     ],
 };
 

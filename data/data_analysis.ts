@@ -2,10 +2,17 @@ import { QuestionCategory } from '../types';
 
 const dataAnalysisCategory: QuestionCategory = {
     id: 'data_analysis',
-    title: 'Data Analysis',
+    title: 'Data Analysis & Preprocessing',
     icon: 'fa-chart-pie',
-    description: 'Techniques for exploring, cleaning, and transforming data to uncover insights and prepare it for modeling.',
+    description: 'Techniques for EDA, cleaning, feature engineering, and preparing data for modeling.',
     questions: [
+      {
+        id: 'foundations-3',
+        question: 'What are the main types of data? (Categorical vs. Numeric)',
+        concepts: '**Numeric Data**: Data that can be measured on a numerical scale. It can be continuous (e.g., height) or discrete (e.g., number of cars).\n**Categorical Data**: Data that represents characteristics and can be divided into groups. It can be nominal (no order, e.g., colors) or ordinal (has order, e.g., "low", "medium", "high").',
+        answer: 'Data is primarily split into two types, and knowing the difference is critical for feature engineering and model selection.\n- **Numeric Data**: Represents quantities. You can perform mathematical operations on it. Examples include **age, salary, temperature**.\n- **Categorical Data**: Represents labels or categories. You can count them, but not perform math. Examples include **city, gender, product category**.',
+        example: 'In a customer dataset, **`age` is numeric**, while **`country_of_residence` is categorical**. You would use a regression model to predict `age`, but a classification model to predict `country_of_residence`.',
+      },
       {
         id: 'da-1',
         question: 'How would you handle missing data for categorical vs. numeric features?',
@@ -40,7 +47,14 @@ const dataAnalysisCategory: QuestionCategory = {
         concepts: '**Feature Scaling**: A method used to standardize the range of independent variables or features of data. Since the range of values of raw data varies widely, in some machine learning algorithms, objective functions will not work properly without normalization.',
         answer: 'Feature scaling is critical for models that are sensitive to distance or magnitude.\n- **Models that NEED scaling**: Linear/Logistic Regression, KNN, SVM, Neural Networks.\n- **Models that DO NOT need scaling**: Tree-based models like Decision Trees, Random Forest, and XGBoost.\n\n**Tree-based models** are not affected because they make splits on features based on their **rank order**, not their scale.',
         example: 'If you are building a customer churn model with **XGBoost**, you **don\'t need to scale** features like `account_balance` (from $0 to $1M) and `age` (from 18 to 90). The model can handle these different scales without issue.',
-      }
+      },
+      {
+        id: 'pychal-20',
+        question: 'Write balanced dataset sampling manually.',
+        concepts: '**Core Concepts**: Imbalanced Data, Resampling, Undersampling.\n**Explanation**: When one class in a classification problem is much more frequent than another (e.g., 99% non-fraud vs. 1% fraud), models can become biased towards the majority class. Resampling techniques create a new, balanced dataset for training. Undersampling, shown here, reduces the number of samples from the majority class to match the number in the minority class.',
+        answer: '---CODE_START---python\nimport pandas as pd\n\n# Create an imbalanced DataFrame\ndata = {\'feature\': range(20), \'target\': [0]*18 + [1]*2}\ndf = pd.DataFrame(data)\n\n# --- Manual Undersampling Solution ---\ndef balance_dataframe(df, target_col):\n    # 1. Get class counts and identify minority class\n    class_counts = df[target_col].value_counts()\n    minority_class = class_counts.idxmin()\n    minority_size = class_counts.min()\n\n    # 2. Separate majority and minority classes\n    df_minority = df[df[target_col] == minority_class]\n    df_majority = df[df[target_col] != minority_class]\n\n    # 3. Downsample the majority class\n    df_majority_downsampled = df_majority.sample(n=minority_size, random_state=42)\n\n    # 4. Concatenate the balanced dataframes\n    df_balanced = pd.concat([df_majority_downsampled, df_minority])\n\n    return df_balanced.sample(frac=1, random_state=42).reset_index(drop=True)\n\nbalanced_df = balance_dataframe(df, \'target\')\nprint("Original Counts:\\n", df[\'target\'].value_counts())\nprint("\\nBalanced Counts:\\n", balanced_df[\'target\'].value_counts())\nprint("\\nBalanced DataFrame:\\n", balanced_df)\n---CODE_END---',
+        example: '**Code Explanation**:\n1. The function first determines which class is the minority and its size.\n2. It splits the original DataFrame into two: one with only minority class samples and one with only majority class samples.\n3. The key step is `df_majority.sample(n=minority_size)`. This randomly selects a number of rows from the majority DataFrame equal to the size of the minority class.\n4. Finally, it combines this smaller majority sample with the original minority sample using `pd.concat` and shuffles the result to create the final balanced training set.'
+      },
     ]
 };
 

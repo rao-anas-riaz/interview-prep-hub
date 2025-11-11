@@ -138,6 +138,55 @@ const sqlCategory: QuestionCategory = {
         concepts: '**Window Functions**, `LAG`, `LEAD`, Consecutive Sequences.',
         answer: 'This problem can be solved efficiently using window functions like `LAG` or `LEAD` to check preceding or succeeding rows.\n1.  Use a CTE to access the value of the previous row (`LAG(Num, 1)`) and the row before that (`LAG(Num, 2)`).\n2.  The `OVER (ORDER BY Id)` clause ensures the rows are processed in the correct sequence.\n3.  In the outer query, select the numbers where the current `Num` is equal to both of the preceding numbers.---CODE_START---sql\nWITH ConsecutiveNums AS (\n    SELECT\n        Num,\n        LAG(Num, 1) OVER (ORDER BY Id) as PrevNum1,\n        LAG(Num, 2) OVER (ORDER BY Id) as PrevNum2\n    FROM Logs\n)\nSELECT DISTINCT Num\nFROM ConsecutiveNums\nWHERE Num = PrevNum1 AND Num = PrevNum2;\n---CODE_END---',
         example: 'Given a `Logs` table with consecutive IDs and numbers, if rows with IDs 3, 4, and 5 all have the number `7`, this query will identify `7` as a number that appeared three times consecutively.'
+      },
+      {
+        id: 'sql-20',
+        question: 'What are the most common types of SQL JOINs?',
+        concepts: '**INNER JOIN**, **LEFT JOIN**, **RIGHT JOIN**, **FULL OUTER JOIN**. These are fundamental operations for combining data from multiple relational tables.',
+        answer: 'There are four primary types of joins used to combine rows from two or more tables:\n- **`INNER JOIN`**: This is the most frequently used join. It returns only the rows where the join condition is met in **both** tables.\n- **`LEFT JOIN` (or LEFT OUTER JOIN)**: Returns **all** rows from the left table, and the matched rows from the right table. If there is no match in the right table for a row in the left table, the result is `NULL` on the right side. This is useful for finding items in one table that may not have a corresponding entry in another.\n- **`RIGHT JOIN` (or RIGHT OUTER JOIN)**: The reverse of a `LEFT JOIN`. It returns **all** rows from the right table and matched rows from the left. It\'s less common because you can almost always rewrite it as a `LEFT JOIN`.\n- **`FULL OUTER JOIN`**: Returns all rows when there is a match in either the left or the right table. It effectively combines the results of both `LEFT` and `RIGHT` joins. It is used when you need a complete picture of all records from both tables, regardless of matches.',
+        example: 'Given a `Customers` table and an `Orders` table:\n- An `INNER JOIN` returns customers who have placed an order.\n- A `LEFT JOIN` returns all customers, with order details being `NULL` for those who have never ordered.'
+      },
+      {
+        id: 'sql-21',
+        question: 'What are CROSS JOIN and SELF JOIN, and what are their use cases?',
+        concepts: '**CROSS JOIN**, **Cartesian Product**, **SELF JOIN**, **Hierarchical Data**.',
+        answer: 'These are two specialized types of joins:\n- **`SELF JOIN`**: A regular join where a table is joined with itself. This requires using table aliases to distinguish between the two instances of the table. **Use Case**: Querying hierarchical data (e.g., finding an employee\'s manager when both are in the same `Employees` table) or comparing rows within the same table.\n- **`CROSS JOIN`**: Returns the **Cartesian product** of the two tables. Every row from the first table is combined with every row from the second table. It does not have an `ON` clause. **Use Case**: Generating all possible combinations of items. For example, creating a list of every possible product variation by joining a `T-Shirts` table with a `Colors` table.',
+        example: 'A `SELF JOIN` is used in the classic problem of finding employees who earn more than their managers. A `CROSS JOIN` would be used by a clothing retailer to generate a master list of all available t-shirt sizes (`S`, `M`, `L`) for every color (`Red`, `Blue`, `Green`) they sell.'
+      },
+      {
+        id: 'sql-22',
+        question: 'Write a query to select all records from a table while excluding weekends.',
+        concepts: '**Date Functions**, **`DAYOFWEEK`**, **`WEEKDAY`**, **`WHERE` Clause**. The exact function varies between SQL dialects.',
+        answer: 'To exclude weekends, you need to use a date function that can identify the day of the week for a given date, and then filter on that result in the `WHERE` clause. The specific function depends on the SQL dialect:\n- **PostgreSQL**: `EXTRACT(ISODOW FROM your_date_column) NOT IN (6, 7)` (Monday=1, Sunday=7)\n- **SQL Server**: `DATEPART(weekday, your_date_column) NOT IN (1, 7)` (Sunday=1, Saturday=7)\n- **MySQL**: `DAYOFWEEK(your_date_column) NOT IN (1, 7)` (Sunday=1, Saturday=7)\n- **SQLite**: `strftime(\'%w\', your_date_column) NOT IN (\'0\', \'6\')` (Sunday=0, Saturday=6)',
+        example: '---CODE_START---sql\n-- This example uses the SQLite strftime function, which is common.\nSELECT\n    *\nFROM sales_log\nWHERE \n    strftime(\'%w\', sale_date) NOT IN (\'0\', \'6\');\n---CODE_END---'
+      },
+      {
+        id: 'sql-23',
+        question: 'What is the difference between a CTE and a Subquery?',
+        concepts: '**CTE (Common Table Expression)**, **Subquery (or Derived Table)**, **Readability**, **Recursion**.',
+        answer: 'Both are used to create temporary result sets, but they have key differences in structure and capability:\n- **Subquery**: A query nested inside another query (`SELECT`, `FROM`, `WHERE`, etc.). They can make the main query difficult to read if there are multiple levels of nesting.\n- **CTE**: A named, temporary result set defined using a `WITH` clause at the beginning of a query.\n\n**Key Differences**:\n- **Readability**: CTEs are much more readable. They break a complex query into logical, sequential steps, making it easier to understand and debug.\n- **Reusability**: A CTE can be referenced multiple times within the query that follows it. A subquery must be rewritten each time it is needed.\n- **Recursion**: CTEs can be recursive (refer to themselves), which is essential for querying hierarchical data like org charts. Subqueries cannot be recursive.',
+        example: 'A query to find departments with total sales above the company average is much cleaner with a CTE to first calculate department totals, and then a simple main query to perform the final filter. Doing this with nested subqueries would be harder to follow.'
+      },
+      {
+        id: 'sql-24',
+        question: 'What are some common ways to optimize a SQL query?',
+        concepts: '**Indexing**, **Query Execution Plan**, **`SELECT *`**, **SARGable Queries**, **JOINs**.',
+        answer: 'Query optimization is about helping the database engine find the most efficient way to retrieve your data:\n1.  **Ensure Proper Indexing**: This is the most critical step. Add indexes to columns frequently used in `WHERE` clauses, `JOIN` conditions, and `ORDER BY` clauses.\n2.  **Analyze the Execution Plan**: Use `EXPLAIN` (or `EXPLAIN ANALYZE`) to see how the database is executing your query. Look for full table scans on large tables, as this is a major performance bottleneck.\n3.  **Avoid `SELECT *`**: Only select the columns you actually need. This reduces the amount of data transferred from the database to the client.\n4.  **Write SARGable Queries**: Make your `WHERE` clauses "Searchable". This means avoiding functions on indexed columns. For example, `WHERE YEAR(order_date) = 2023` prevents the use of an index on `order_date`, while `WHERE order_date >= \'2023-01-01\' AND order_date < \'2024-01-01\'` allows the index to be used.',
+        example: '---CODE_START---sql\n-- BAD (Non-SARGable): Cannot use an index on order_date\nSELECT * FROM orders WHERE YEAR(order_date) = 2023;\n\n-- GOOD (SARGable): Can use an index on order_date\nSELECT order_id, amount FROM orders WHERE order_date >= \'2023-01-01\' AND order_date < \'2024-01-01\';\n---CODE_END---'
+      },
+      {
+        id: 'sql-25',
+        question: 'How do you pivot data in SQL, converting rows into columns?',
+        concepts: '**Pivoting**, **Conditional Aggregation**, **`CASE WHEN`**, **`PIVOT` Operator**.',
+        answer: 'Pivoting transforms data from a "long" format to a "wide" format by turning unique row values from one column into multiple new columns.\n\nThe most universal method, which works across all SQL dialects, is **conditional aggregation**:\n1.  Use an aggregate function like `SUM()`, `MAX()`, or `COUNT()`.\n2.  Inside the aggregate function, use a `CASE WHEN` statement to check for the value you want to turn into a column. If it matches, return the value to be aggregated; otherwise, return `NULL` or `0`.\n3.  `GROUP BY` the column(s) that will remain as your rows.\n\nSome databases like SQL Server have a specific `PIVOT` operator, but the conditional aggregation approach is more portable.',
+        example: '---CODE_START---sql\n-- Pivot a sales table to show total sales for each year as a separate column\nSELECT\n    product_id,\n    SUM(CASE WHEN sale_year = 2022 THEN amount ELSE 0 END) AS sales_2022,\n    SUM(CASE WHEN sale_year = 2023 THEN amount ELSE 0 END) AS sales_2023\nFROM sales\nGROUP BY product_id;\n---CODE_END---'
+      },
+      {
+        id: 'sql-26',
+        question: 'How would you design a query to compile a daily report of 10 different KPIs from multiple tables?',
+        concepts: '**Data Modeling**, **ETL**, **CTEs**, **JOINs**, **Aggregation**.',
+        answer: 'This is a common reporting task that requires an organized approach to avoid a messy, unreadable query. The best strategy is to use Common Table Expressions (CTEs).\n1.  **Create One CTE per KPI**: Isolate the logic for each KPI. Write a separate, self-contained CTE that calculates one metric and aggregates it by date. For example, `WITH DailySignups AS (...)`, `WITH DailyRevenue AS (...)`, etc.\n2.  **Join the CTEs**: In the final `SELECT` statement, join all the individual KPI CTEs together. It is crucial to use a `LEFT JOIN` and start from a calendar table or the most fundamental KPI (like active users). This ensures that if one KPI has no data for a specific day, you still get a row for that day with a `NULL` or `0` for that metric.\n3.  **Materialize the Results**: For performance, a complex query like this should not be run ad-hoc by business users. It should be part of a daily scheduled job (ETL/ELT) that runs the query and saves the results into a final, clean reporting table.',
+        example: '---CODE_START---sql\nWITH daily_signups AS (\n    SELECT signup_date, COUNT(user_id) as new_users\n    FROM users GROUP BY 1\n),\ndaily_revenue AS (\n    SELECT order_date, SUM(amount) as total_revenue\n    FROM orders GROUP BY 1\n)\nSELECT\n    ds.signup_date as report_date,\n    ds.new_users,\n    dr.total_revenue\nFROM daily_signups ds\nLEFT JOIN daily_revenue dr ON ds.signup_date = dr.order_date;\n---CODE_END---'
       }
     ],
 };

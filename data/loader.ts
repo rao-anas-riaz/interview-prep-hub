@@ -13,35 +13,41 @@ type DynamicImportType = () => Promise<QuestionModule>;
 export const getCategoryData = async (categoryId: string): Promise<QuestionCategory | null> => {
   let importFn: DynamicImportType | undefined;
   switch (categoryId) {
-    case 'foundations':
-      importFn = () => import('./foundations');
-      break;
-    case 'data_analysis':
-      importFn = () => import('./data_analysis');
-      break;
-    case 'python_general':
-      importFn = () => import('./python_general');
-      break;
-    case 'python_ds':
-      importFn = () => import('./python_ds');
-      break;
-    case 'python_challenges':
-      importFn = () => import('./python_challenges');
+    case 'stats_foundations':
+      importFn = () => import('./statistics_foundations');
       break;
     case 'sql':
       importFn = () => import('./sql');
       break;
-    case 'pyspark':
-      importFn = () => import('./pyspark');
+    case 'python_core':
+      importFn = () => import('./python_core');
+      break;
+    case 'data_manipulation':
+      importFn = () => import('./data_manipulation');
+      break;
+    case 'data_analysis':
+      importFn = () => import('./data_analysis');
       break;
     case 'ml_modeling':
       importFn = () => import('./ml_modeling');
       break;
+    case 'ml_algorithms_scratch':
+      importFn = () => import('./ml_algorithms_scratch');
+      break;
     case 'evaluation':
       importFn = () => import('./evaluation');
       break;
+    case 'pyspark':
+      importFn = () => import('./pyspark');
+      break;
+    case 'power_bi':
+      importFn = () => import('./power_bi');
+      break;
     case 'mlops_deployment':
       importFn = () => import('./mlops_deployment');
+      break;
+    case 'langchain':
+      importFn = () => import('./langchain');
       break;
     case 'communication_behavioral':
       importFn = () => import('./communication_behavioral');
@@ -50,6 +56,11 @@ export const getCategoryData = async (categoryId: string): Promise<QuestionCateg
       return null;
   }
   
+  if (!importFn) {
+    console.error(`No import function found for categoryId: ${categoryId}`);
+    return null;
+  }
+
   const module = await importFn();
   return module.default;
 };
