@@ -75,6 +75,62 @@ const powerBICategory: QuestionCategory = {
         concepts: '**STAR Method**: A structured way to answer behavioral questions (Situation, Task, Action, Result).\n**Problem Solving**: Demonstrating your ability to diagnose issues, develop a plan, and execute it.',
         answer: 'This is a behavioral question, so you should structure your answer using the STAR method to tell a clear and concise story.\n- **S (Situation)**: Describe the business context and the problem. What was wrong? E.g., "A client had a critical sales report that took over two minutes to load, and users complained the data was often inaccurate."\n- **T (Task)**: State your specific responsibility. What were you asked to do? E.g., "My task was to diagnose the performance and data quality issues, optimize the report, and validate the numbers."\n- **A (Action)**: Detail the steps you took. This should be the longest part of your answer. E.g., "First, I used the Performance Analyzer to identify the slowest visuals. Then, I examined the data model and found it was a flat table with many redundant columns. I restructured the model into a star schema, separating sales facts from product and customer dimensions. I used Power Query to clean the data and replaced several complex calculated columns with efficient DAX measures."\n- **R (Result)**: Quantify the outcome and its business impact. E.g., "By optimizing the model and DAX, the report load time decreased from 2 minutes to under 5 seconds. I also added a validation page that reconciled the report totals with the source system, which increased stakeholder trust in the data. This led to a 50% increase in report usage by the sales team."',
         example: 'Use the structure above to frame a personal project experience. Focus on demonstrating a systematic approach to problem-solving and always link your technical actions to a measurable business outcome.'
+      },
+      {
+        id: 'pbi-11',
+        question: 'If your data source schema changes (like a new column is added, removed, or renamed), how will you handle it in Power Query?',
+        concepts: '**Schema Drift**: Changes in the structure of data at the source.\n**Resiliency**: Designing queries that don\'t break when non-critical changes occur.\n**Advanced Editor**: Directly modifying the M code to handle dynamic schemas.',
+        answer: 'Handling schema changes requires a robust Power Query design strategy:\n1.  **Avoid Hardcoding Columns**: Standard steps like "Changed Type" often hardcode every column name. Deleting or renaming a column in the source will break this step. To fix this, you can remove the hardcoded list from the M code or use `Table.TransformColumnTypes` dynamically.\n2.  **Use `Table.ColumnNames`**: If you need to perform an operation on "all other columns" (like unpivoting), fetch the column names dynamically instead of selecting them by name.\n3.  **`MissingField.Ignore`**: When selecting records or columns, you can use the optional `MissingField.Ignore` parameter. This tells Power Query to proceed even if a specific column is missing, rather than throwing an error.\n4.  **Unpivot**: Unpivoting data is a great way to handle new attribute columns. If a new "Month" column is added to a wide dataset, an unpivot step will automatically pick it up and turn it into a row value without any code changes.',
+        example: 'If you have a source with columns `[ID, Name, Jan_Sales, Feb_Sales]`, and next month `Mar_Sales` is added, a standard query might ignore it. By selecting `ID` and `Name` and choosing "Unpivot Other Columns", your query will automatically ingest `Mar_Sales` data without any maintenance.'
+      },
+      {
+        id: 'pbi-12',
+        question: 'Write a DAX measure for 2-Month Growth Rate.',
+        concepts: '**Time Intelligence**: Using DAX to compare data across different time periods.\n**CALCULATE & DATEADD**: Shifting the filter context to a previous date.\n**Variables (VAR)**: Making code cleaner and more performant.',
+        answer: 'To calculate a 2-month growth rate, you need to compare current sales with sales from two months ago.\n\n1.  **Calculate Current Sales**: `SUM(Sales[Amount])`.\n2.  **Calculate Past Sales**: Use `CALCULATE` with `DATEADD` to shift the context back by 2 months.\n3.  **Calculate Growth**: Subtract past from current, and divide by past. Using `DIVIDE` is safer than `/` as it handles division by zero gracefully.',
+        example: '---CODE_START---dax\n2-Month Growth Rate = \nVAR CurrentSales = SUM(Sales[Amount])\nVAR Sales2MonthsAgo = \n    CALCULATE(\n        SUM(Sales[Amount]), \n        DATEADD(\'Date\'[Date], -2, MONTH)\n    )\n\nRETURN\n    DIVIDE(CurrentSales - Sales2MonthsAgo, Sales2MonthsAgo)\n---CODE_END---'
+      },
+      {
+        id: 'pbi-13',
+        question: 'What is Incremental Refresh vs. Scheduled Refresh?',
+        concepts: '**Scheduled Refresh**: Reloading the entire dataset at set intervals.\n**Incremental Refresh**: Reloading only the data that has changed or is new.\n**Partitioning**: Power BI manages partitions behind the scenes for incremental refresh.',
+        answer: 'These are two strategies for keeping data up-to-date:\n- **Scheduled Refresh (Full Refresh)**: This creates a completely new snapshot of the data. Power BI deletes all existing data in the dataset and re-imports everything from the source. This is simple but becomes inefficient and slow as data grows.\n- **Incremental Refresh**: Power BI creates partitions for the table. It keeps older historical partitions (e.g., 5 years of data) static and only refreshes the latest partition (e.g., the last 10 days). This makes refreshes much faster, more reliable, and reduces the load on the source system.',
+        example: 'For a retailer with 10 years of transaction history, a **Scheduled Refresh** might take 2 hours to reload 100 million rows every night. With **Incremental Refresh**, the initial load takes 2 hours, but subsequent daily refreshes might take only 5 minutes because they only process the new transactions from the current day.'
+      },
+      {
+        id: 'pbi-14',
+        question: 'How do you solve Many-to-Many relationship issues for better data accuracy?',
+        concepts: '**Many-to-Many**: A relationship where a value can appear multiple times in both joined tables.\n**Bridge Table (Junction Table)**: An intermediate table containing unique keys used to link two many-to-many tables.\n**Ambiguity**: Many-to-many relationships can introduce ambiguity in filter propagation.',
+        answer: 'Direct Many-to-Many relationships in Power BI (using the "Both" cross-filter direction) can be risky. They often lead to ambiguous paths and unexpected filtering results.\n\n**The Best Practice Solution**: Use a **Bridge Table**.\n1.  Identify the common entity (e.g., `Student` and `Class` are Many-to-Many because a student takes many classes and a class has many students).\n2.  Create a distinct intermediate table (e.g., `Enrollments`) that contains the unique combinations of keys from both sides.\n3.  Create One-to-Many relationships from the original tables to the bridge table.\n\nThis converts the unstable Many-to-Many relationship into two standard, stable One-to-Many relationships.',
+        example: 'If you have `Sales` and `Budget` tables, both at a `Month` granularity (Many-to-Many via Date), you should not link them directly. Instead, link both `Sales` and `Budget` to a shared `DimDate` table using One-to-Many relationships. Filter the `DimDate` table to filter both facts accurately.'
+      },
+      {
+        id: 'pbi-15',
+        question: 'What distinguishes a KPI (Key Performance Indicator) from a dimension?',
+        concepts: '**KPI**: A measurable value that demonstrates how effectively a company is achieving key business objectives.\n**Dimension**: A descriptive attribute or characteristic of data used for filtering, grouping, and labeling.',
+        answer: 'They serve different purposes in data analysis:\n- **KPI (Metric)**: It is a quantitative value (a number) that is compared against a target. It answers "How much?" or "How well?". Examples: Total Sales, Customer Satisfaction Score, Churn Rate.\n- **Dimension**: It is a qualitative attribute (text or category) that provides context to the numbers. It answers "Who?", "Where?", or "When?". Examples: Product Category, Region, Month, Employee Name.\n\nYou slice a KPI *by* a Dimension (e.g., "Total Sales" by "Region").',
+        example: 'In a sales report, **$1,000,000** is the **KPI** (Sales Amount). **"North America"** and **"Q1 2023"** are the **Dimensions** used to break down that number.'
+      },
+      {
+        id: 'pbi-16',
+        question: 'Can you explain how you would create a DAX measure in Power BI to calculate the year-over-year growth for a specific metric?',
+        concepts: '**Time Intelligence**, **SAMEPERIODLASTYEAR**, **DIVIDE**. Calculating growth requires comparing a current metric to a past metric.',
+        answer: 'To calculate Year-over-Year (YoY) growth, you need three components:\n1.  **Current Value**: The base measure (e.g., `[Total Sales]`).\n2.  **Previous Year Value**: Use `CALCULATE` with `SAMEPERIODLASTYEAR` to get the value for the corresponding period in the previous year.\n3.  **Growth Calculation**: Find the difference and divide by the previous year\'s value.\n\nDAX:\n`YoY Growth = DIVIDE([Total Sales] - [Sales LY], [Sales LY])`\nWhere `[Sales LY] = CALCULATE([Total Sales], SAMEPERIODLASTYEAR(\'Date\'[Date]))`.',
+        example: 'If Sales in 2023 were $120 and Sales in 2022 were $100:\n- Sales LY = $100\n- Difference = $20\n- Growth = 20 / 100 = 20%'
+      },
+      {
+        id: 'pbi-17',
+        question: 'Identify a unique chart type in Power BI that differs from standard charts and explain its purpose.',
+        concepts: '**AI Visuals**, **Decomposition Tree**, **Key Influencers**. Power BI offers advanced visuals beyond simple bars and lines.',
+        answer: 'The **Decomposition Tree** is a unique, AI-powered visual that allows for ad-hoc root cause analysis.\n\nUnlike standard charts where the axis is fixed, the Decomposition Tree lets users interactively choose how to drill down into a measure. It breaks down a value (like Total Sales) by various dimensions (like Region, Product, Person) in a tree-like structure.\n\nIt also has an "AI split" feature where you can ask it to automatically find the dimension that generates the "High" or "Low" values, helping you find patterns you didn\'t know to look for.',
+        example: 'If Total Sales are down, you can use a Decomposition Tree to break Sales down. You might first click "Region" and see "West" is low. Then, within "West", you click "Product Category" and see "Electronics" is the culprit. It lets you traverse the data hierarchy dynamically.'
+      },
+      {
+        id: 'pbi-18',
+        question: 'Describe how you would implement a time intelligence feature in Power BI to analyze sales trends over different time periods.',
+        concepts: '**Date Table**, **DATESYTD**, **DATESMTD**, **DATESQTD**. Implementing flexible time analysis.',
+        answer: 'Implementing robust time intelligence requires a dedicated **Date Table** linked to your fact table.\n\n1.  **Date Table**: Ensure you have a continuous date table (no missing days) marked as a "Date table" in the model.\n2.  **Measures**: Create measures using DAX time intelligence functions.\n    - **YTD**: `CALCULATE(SUM(Sales[Amount]), DATESYTD(\'Date\'[Date]))`\n    - **QTD**: `CALCULATE(SUM(Sales[Amount]), DATESQTD(\'Date\'[Date]))`\n    - **MTD**: `CALCULATE(SUM(Sales[Amount]), DATESMTD(\'Date\'[Date]))`\n3.  **Visualization**: Use a matrix visual with the Date hierarchy (Year > Quarter > Month) on rows and these measures on columns to allow users to drill down and see trends across different grains.',
+        example: 'By setting up `Sales YTD` and `Sales Previous Year` measures, a user can easily see that while monthly sales might fluctuate, the Year-to-Date trend is consistently 5% higher than last year.'
       }
     ],
 };

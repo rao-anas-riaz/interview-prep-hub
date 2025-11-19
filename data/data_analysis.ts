@@ -1,3 +1,4 @@
+
 import { QuestionCategory } from '../types';
 
 const dataAnalysisCategory: QuestionCategory = {
@@ -55,6 +56,13 @@ const dataAnalysisCategory: QuestionCategory = {
         answer: '---CODE_START---python\nimport pandas as pd\n\n# Create an imbalanced DataFrame\ndata = {\'feature\': range(20), \'target\': [0]*18 + [1]*2}\ndf = pd.DataFrame(data)\n\n# --- Manual Undersampling Solution ---\ndef balance_dataframe(df, target_col):\n    # 1. Get class counts and identify minority class\n    class_counts = df[target_col].value_counts()\n    minority_class = class_counts.idxmin()\n    minority_size = class_counts.min()\n\n    # 2. Separate majority and minority classes\n    df_minority = df[df[target_col] == minority_class]\n    df_majority = df[df[target_col] != minority_class]\n\n    # 3. Downsample the majority class\n    df_majority_downsampled = df_majority.sample(n=minority_size, random_state=42)\n\n    # 4. Concatenate the balanced dataframes\n    df_balanced = pd.concat([df_majority_downsampled, df_minority])\n\n    return df_balanced.sample(frac=1, random_state=42).reset_index(drop=True)\n\nbalanced_df = balance_dataframe(df, \'target\')\nprint("Original Counts:\\n", df[\'target\'].value_counts())\nprint("\\nBalanced Counts:\\n", balanced_df[\'target\'].value_counts())\nprint("\\nBalanced DataFrame:\\n", balanced_df)\n---CODE_END---',
         example: '**Code Explanation**:\n1. The function first determines which class is the minority and its size.\n2. It splits the original DataFrame into two: one with only minority class samples and one with only majority class samples.\n3. The key step is `df_majority.sample(n=minority_size)`. This randomly selects a number of rows from the majority DataFrame equal to the size of the minority class.\n4. Finally, it combines this smaller majority sample with the original minority sample using `pd.concat` and shuffles the result to create the final balanced training set.'
       },
+      {
+        id: 'da-6',
+        question: 'In a customer dataset, you notice inconsistent NULL handling across different columns. How would you clean and standardize the data before analysis?',
+        concepts: '**Data Cleaning**, **Standardization**, **Imputation**, **Coalesce**. Preparing messy data for consumption.',
+        answer: 'Inconsistent NULLs (e.g., actual `NULL`, string "NULL", empty string "", "N/A") are a common issue.\n1.  **Profile the Data**: First, identify all the variations of "missing" values.\n2.  **Standardize to NULL**: Convert all placeholder strings ("N/A", "", "Unknown") to actual SQL/Pandas `NULL` or `NaN`. This allows functions like `COALESCE` or `fillna` to work consistently.\n3.  **Impute or Handle**: Once standardized, decide on a strategy: drop the rows, fill with a default value (0, "Unknown"), or impute using statistical methods (mean/median).\n\nExample in SQL: `UPDATE Table SET Col = NULL WHERE Col IN (\'\', \'N/A\', \'NULL\')`.',
+        example: 'I worked with a dataset where the `Email` column had empty strings and the text "NULL" mixed with actual NULLs. I first updated all empty strings and "NULL" text to actual NULL values. Then, I calculated the percentage of missing emails to decide whether to drop those rows or treat them as "Guest" users.'
+      }
     ]
 };
 

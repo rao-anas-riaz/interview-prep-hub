@@ -43,6 +43,9 @@ export const getCategoryData = async (categoryId: string): Promise<QuestionCateg
     case 'power_bi':
       importFn = () => import('./power_bi');
       break;
+    case 'data_engineering':
+      importFn = () => import('./data_engineering');
+      break;
     case 'mlops_deployment':
       importFn = () => import('./mlops_deployment');
       break;

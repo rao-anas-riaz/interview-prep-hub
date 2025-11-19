@@ -1,3 +1,4 @@
+
 import { QuestionCategory } from '../types';
 
 const sqlCategory: QuestionCategory = {
@@ -164,7 +165,7 @@ const sqlCategory: QuestionCategory = {
         id: 'sql-23',
         question: 'What is the difference between a CTE and a Subquery?',
         concepts: '**CTE (Common Table Expression)**, **Subquery (or Derived Table)**, **Readability**, **Recursion**.',
-        answer: 'Both are used to create temporary result sets, but they have key differences in structure and capability:\n- **Subquery**: A query nested inside another query (`SELECT`, `FROM`, `WHERE`, etc.). They can make the main query difficult to read if there are multiple levels of nesting.\n- **CTE**: A named, temporary result set defined using a `WITH` clause at the beginning of a query.\n\n**Key Differences**:\n- **Readability**: CTEs are much more readable. They break a complex query into logical, sequential steps, making it easier to understand and debug.\n- **Reusability**: A CTE can be referenced multiple times within the query that follows it. A subquery must be rewritten each time it is needed.\n- **Recursion**: CTEs can be recursive (refer to themselves), which is essential for querying hierarchical data like org charts. Subqueries cannot be recursive.',
+        answer: 'Both are used to create temporary result sets, but they have key differences in structure and capability:\n- **Subquery**: A query nested inside another query (`SELECT`, `FROM`, `WHERE`, etc.). They can make the main query difficult to read if there are multiple levels of nesting.\n- **CTE**: A named, temporary result set defined using a `WITH` clause at the beginning of a query.\n\n**Key Differences**:\n- **Readability**: CTEs are much more readable. They break a complex query into logical, sequential steps, making it easier to understand and debug.\n- **Reusability**: A CTE can be referenced multiple times within a single query. A subquery must be rewritten each time it is needed.\n- **Recursion**: CTEs can be recursive (refer to themselves), which is essential for querying hierarchical data like org charts. Subqueries cannot be recursive.',
         example: 'A query to find departments with total sales above the company average is much cleaner with a CTE to first calculate department totals, and then a simple main query to perform the final filter. Doing this with nested subqueries would be harder to follow.'
       },
       {
@@ -178,7 +179,7 @@ const sqlCategory: QuestionCategory = {
         id: 'sql-25',
         question: 'How do you pivot data in SQL, converting rows into columns?',
         concepts: '**Pivoting**, **Conditional Aggregation**, **`CASE WHEN`**, **`PIVOT` Operator**.',
-        answer: 'Pivoting transforms data from a "long" format to a "wide" format by turning unique row values from one column into multiple new columns.\n\nThe most universal method, which works across all SQL dialects, is **conditional aggregation**:\n1.  Use an aggregate function like `SUM()`, `MAX()`, or `COUNT()`.\n2.  Inside the aggregate function, use a `CASE WHEN` statement to check for the value you want to turn into a column. If it matches, return the value to be aggregated; otherwise, return `NULL` or `0`.\n3.  `GROUP BY` the column(s) that will remain as your rows.\n\nSome databases like SQL Server have a specific `PIVOT` operator, but the conditional aggregation approach is more portable.',
+        answer: 'Pivoting transforms data from a "long" format to a "wide" format by turning unique row values from one column into multiple new columns.\n\nThe most universal method, which works across all SQL dialects, is **conditional aggregation**:\n1.  **Use an aggregate function** like `SUM()`, `MAX()`, or `COUNT()`.\n2.  Inside the aggregate function, use a `CASE WHEN` statement to check for the value you want to turn into a column. If it matches, return the value to be aggregated; otherwise, return `NULL` or `0`.\n3.  `GROUP BY` the column(s) that will remain as your rows.\n\nSome databases like SQL Server have a specific `PIVOT` operator, but the conditional aggregation approach is more portable.',
         example: '---CODE_START---sql\n-- Pivot a sales table to show total sales for each year as a separate column\nSELECT\n    product_id,\n    SUM(CASE WHEN sale_year = 2022 THEN amount ELSE 0 END) AS sales_2022,\n    SUM(CASE WHEN sale_year = 2023 THEN amount ELSE 0 END) AS sales_2023\nFROM sales\nGROUP BY product_id;\n---CODE_END---'
       },
       {
@@ -187,6 +188,125 @@ const sqlCategory: QuestionCategory = {
         concepts: '**Data Modeling**, **ETL**, **CTEs**, **JOINs**, **Aggregation**.',
         answer: 'This is a common reporting task that requires an organized approach to avoid a messy, unreadable query. The best strategy is to use Common Table Expressions (CTEs).\n1.  **Create One CTE per KPI**: Isolate the logic for each KPI. Write a separate, self-contained CTE that calculates one metric and aggregates it by date. For example, `WITH DailySignups AS (...)`, `WITH DailyRevenue AS (...)`, etc.\n2.  **Join the CTEs**: In the final `SELECT` statement, join all the individual KPI CTEs together. It is crucial to use a `LEFT JOIN` and start from a calendar table or the most fundamental KPI (like active users). This ensures that if one KPI has no data for a specific day, you still get a row for that day with a `NULL` or `0` for that metric.\n3.  **Materialize the Results**: For performance, a complex query like this should not be run ad-hoc by business users. It should be part of a daily scheduled job (ETL/ELT) that runs the query and saves the results into a final, clean reporting table.',
         example: '---CODE_START---sql\nWITH daily_signups AS (\n    SELECT signup_date, COUNT(user_id) as new_users\n    FROM users GROUP BY 1\n),\ndaily_revenue AS (\n    SELECT order_date, SUM(amount) as total_revenue\n    FROM orders GROUP BY 1\n)\nSELECT\n    ds.signup_date as report_date,\n    ds.new_users,\n    dr.total_revenue\nFROM daily_signups ds\nLEFT JOIN daily_revenue dr ON ds.signup_date = dr.order_date;\n---CODE_END---'
+      },
+      {
+        id: 'sql-27',
+        question: 'Write a SQL query to find employees earning more than the average salary in their department.',
+        concepts: '**Correlated Subquery**, **Window Functions**, **CTEs**. This tests the ability to perform calculations within groups.',
+        answer: 'There are two common and efficient ways to solve this: using a Common Table Expression (CTE) with a window function, or using a correlated subquery.\n\nThe CTE and window function approach is often more readable and performant.\n1.  **Create a CTE**: Calculate the average salary for each department using the `AVG() OVER (PARTITION BY ...)` window function. This calculates the average but keeps all original rows intact.\n2.  **Select from the CTE**: Filter the results where the individual\'s salary is greater than the calculated department average.',
+        example: '---CODE_START---sql\n-- Using a CTE and Window Function (more modern and often faster)\nWITH DeptAvgSalary AS (\n    SELECT\n        Name,\n        Salary,\n        DepartmentId,\n        AVG(Salary) OVER (PARTITION BY DepartmentId) as AvgDeptSalary\n    FROM Employee\n)\nSELECT\n    e.Name AS EmployeeName,\n    d.Name AS DepartmentName,\n    e.Salary\nFROM Employee e\nJOIN Department d ON e.DepartmentId = d.Id\nWHERE e.Salary > (\n    SELECT AVG(Salary) \n    FROM Employee \n    WHERE DepartmentId = e.DepartmentId\n);\n---CODE_END---'
+      },
+      {
+        id: 'sql-28',
+        question: 'Find Top Sale Region-wise (Quarterly – 2023).',
+        concepts: '**Aggregation**, **Window Functions**, **Date Extraction**.\n**Goal**: Identify the best performing region in each quarter.',
+        answer: 'To solve this, you need to:\n1.  Extract the Quarter from the `sale_date`.\n2.  Group by Quarter and Region to get total sales.\n3.  Use `RANK()` or `ROW_NUMBER()` to rank regions within each quarter.\n4.  Filter for the top rank.',
+        example: '---CODE_START---sql\nWITH QuarterlySales AS (\n    SELECT \n        region,\n        EXTRACT(QUARTER FROM sale_date) as sale_quarter,\n        SUM(amount) as total_amount\n    FROM Sales\n    WHERE EXTRACT(YEAR FROM sale_date) = 2023\n    GROUP BY 1, 2\n),\nRankedSales AS (\n    SELECT\n        region,\n        sale_quarter,\n        total_amount,\n        RANK() OVER(PARTITION BY sale_quarter ORDER BY total_amount DESC) as rnk\n    FROM QuarterlySales\n)\nSELECT * \nFROM RankedSales \nWHERE rnk = 1;\n---CODE_END---'
+      },
+      {
+        id: 'sql-29',
+        question: 'Explain DENSE_RANK() and PARTITION BY with simple examples.',
+        concepts: '**Window Functions**: Functions that perform calculations across a set of table rows that are related to the current row.\n**Ranking**: Assigning a rank to each row within a partition.',
+        answer: 'These are window function components:\n- **`PARTITION BY`**: Divides the result set into partitions (groups) where the window function is applied independently. It\'s like a "GROUP BY" but doesn\'t collapse rows.\n- **`DENSE_RANK()`**: Assigns a rank to each row. If two rows have the same value, they get the same rank. The next rank is *consecutive* (no gaps). Compare this to `RANK()`, which leaves gaps (1, 1, 3).',
+        example: 'Imagine a race with a tie for 1st place.\n- **RANK()**: 1st, 1st, 3rd.\n- **DENSE_RANK()**: 1st, 1st, 2nd.\n\n---CODE_START---sql\nSELECT \n    Name, \n    Department,\n    Salary,\n    DENSE_RANK() OVER(PARTITION BY Department ORDER BY Salary DESC) as Rank\nFROM Employees;\n---CODE_END---\nThis assigns a rank to employees based on salary, restarting the ranking (1, 2, 3...) for each new Department.'
+      },
+      {
+        id: 'sql-30',
+        question: 'Write a SQL query to find the third highest salary from an employee table with the following columns: EID, ESalary.',
+        concepts: '**OFFSET**, **LIMIT**, **Window Functions**, **Subqueries**. Retrieving the N-th highest value.',
+        answer: 'There are a few standard ways to do this. The most modern and portable method is using `LIMIT` and `OFFSET` (PostgreSQL/MySQL) or `OFFSET FETCH` (SQL Server).\n\n**Method 1: LIMIT/OFFSET (MySQL/PostgreSQL)**\nSort by salary descending, skip the first 2, take the next 1.\n`SELECT ESalary FROM Employee ORDER BY ESalary DESC LIMIT 1 OFFSET 2;`\n\n**Method 2: Window Function (Universal)**\nUse `DENSE_RANK()` to handle potential ties (e.g., if two people share the 2nd highest salary).\n`WITH RankedSalaries AS (`\n`  SELECT ESalary, DENSE_RANK() OVER (ORDER BY ESalary DESC) as rnk`\n`  FROM Employee`\n`)`\n`SELECT ESalary FROM RankedSalaries WHERE rnk = 3;`',
+        example: 'If salaries are [100, 90, 80, 70], `OFFSET 2` skips 100 and 90, returning 80.'
+      },
+      {
+        id: 'sql-31',
+        question: 'Create a SQL procedure using ESalary as a parameter that selects all EIDs from the Employee table where ESalary is less than 50,000.',
+        concepts: '**Stored Procedures**, **Parameters**, **WHERE Clause**. Encapsulating logic in the database.',
+        answer: 'A stored procedure allows you to save a query on the database server and run it with different parameters.\n\n**SQL Server / Generic Syntax**:\n---CODE_START---sql\nCREATE PROCEDURE GetLowSalaryEmployees\n    @SalaryThreshold DECIMAL(10,2)\nAS\nBEGIN\n    SELECT EID\n    FROM Employee\n    WHERE ESalary < @SalaryThreshold;\nEND;\n---CODE_END---\n\nYou would execute it like this: `EXEC GetLowSalaryEmployees @SalaryThreshold = 50000;`',
+        example: 'This procedure makes the "low salary" definition reusable. If management decides the threshold is now 60,000, you just pass a different parameter value instead of rewriting queries.'
+      },
+      {
+        id: 'sql-32',
+        question: 'For the Employee table (EID, ESalary), retrieve all EIDs with odd salaries and join this with another table, empdetails (EID, EDOB), to obtain EDOB.',
+        concepts: '**JOIN**, **Modulo Operator (%)**, **Filtering**. Combining filtering logic with joins.',
+        answer: 'This query requires two steps: filtering for odd numbers and joining to details.\n\n1.  **Filter Odd Salaries**: Use the modulo operator `%`. `ESalary % 2 <> 0` (or `ESalary % 2 = 1`) identifies odd numbers.\n2.  **Join**: Perform an `INNER JOIN` on the common column `EID`.\n\n---CODE_START---sql\nSELECT \n    e.EID, \n    d.EDOB\nFROM Employee e\nJOIN empdetails d ON e.EID = d.EID\nWHERE e.ESalary % 2 <> 0;\n---CODE_END---',
+        example: 'If Employee 101 has a salary of 50001 (odd) and exists in `empdetails`, this query returns their ID and Date of Birth.'
+      },
+      {
+        id: 'sql-33',
+        question: 'How would you use the LEAD or LAG function in SQL to compare week-over-week data?',
+        concepts: '**Window Functions**, **LAG**, **LEAD**, **Time Series Analysis**. Comparing current rows with previous/next rows.',
+        answer: '`LAG` allows you to access data from a previous row, and `LEAD` from a subsequent row, without a self-join. This is perfect for comparing consecutive time periods.\n\nTo compare Week-over-Week (WoW):\n1.  **LAG(Sales, 1)**: Retrieve the sales from the previous row (week).\n2.  **Calculate Growth**: `(CurrentSales - PreviousSales) / PreviousSales`.\n\n---CODE_START---sql\nSELECT \n    WeekNumber,\n    Sales,\n    LAG(Sales, 1) OVER (ORDER BY WeekNumber) as PreviousWeekSales,\n    (Sales - LAG(Sales, 1) OVER (ORDER BY WeekNumber)) as SalesDiff\nFROM WeeklySales;\n---CODE_END---',
+        example: 'If Week 1 Sales = 100 and Week 2 Sales = 110, `LAG` returns 100 for the Week 2 row. The difference is 10.'
+      },
+      {
+        id: 'sql-34',
+        question: 'You have two tables: Customers and Transactions. How would you find active customers who made purchases in the last month?',
+        concepts: '**INNER JOIN**, **Date Filtering**, **DISTINCT**. Joining tables to filter based on activity.',
+        answer: 'You need to join the tables and filter the transactions based on the date.\n1. Perform an `INNER JOIN` between `Customers` and `Transactions` on the customer ID. An inner join automatically filters out customers who have never made a transaction.\n2. Add a `WHERE` clause to filter for transactions that occurred within the last month.\n3. Use `DISTINCT` on the customer ID or Name, as a customer might have made multiple purchases, but you want a unique list of customers.',
+        example: '---CODE_START---sql\nSELECT DISTINCT c.CustomerName\nFROM Customers c\nJOIN Transactions t ON c.CustomerID = t.CustomerID\nWHERE t.TransactionDate >= DATEADD(month, -1, GETDATE());\n---CODE_END---'
+      },
+      {
+        id: 'sql-35',
+        question: 'You need to generate a daily sales report that excludes weekends and public holidays. How would you handle that?',
+        concepts: '**Calendar Table (Date Dimension)**, **LEFT JOIN**, **Filtering**. Handling complex date logic.',
+        answer: 'Using functions like `DATEPART` or `WEEKDAY` handles weekends but fails for public holidays, which vary by year and region. The best practice is to use a **Calendar Table** (or Date Dimension).\n\n1.  **Create a Calendar Table**: This table has a row for every date and columns like `IsWeekend`, `IsHoliday`, `HolidayName`.\n2.  **Join**: Join your sales data to this table on the date column.\n3.  **Filter**: Simply filter where `IsWeekend = 0` and `IsHoliday = 0`.',
+        example: '---CODE_START---sql\nSELECT s.SaleDate, SUM(s.Amount)\nFROM Sales s\nJOIN DimDate d ON s.SaleDate = d.DateValue\nWHERE d.IsWeekend = 0 AND d.IsHoliday = 0\nGROUP BY s.SaleDate;\n---CODE_END---'
+      },
+      {
+        id: 'sql-36',
+        question: 'A query that used to run in seconds is now taking minutes after the dataset grew. What steps would you take to identify and fix the performance issue?',
+        concepts: '**Query Profiling**, **Execution Plan**, **Indexing**, **Statistics**. A systematic approach to performance tuning.',
+        answer: 'When performance degrades due to data growth, I follow these steps:\n1.  **Analyze the Execution Plan**: Check if the database is doing a "Full Table Scan" instead of an "Index Seek". Look for expensive sorting or hashing operations.\n2.  **Check Indexes**: Ensure that columns used in `JOIN`, `WHERE`, and `ORDER BY` clauses are properly indexed. Data growth might have made existing indexes fragmented or insufficient.\n3.  **Update Statistics**: The database optimizer relies on statistics to choose the best plan. If these are outdated, it might choose a poor plan. Running `UPDATE STATISTICS` often fixes sudden performance drops.\n4.  **Review Query Logic**: Look for non-SARGable predicates (e.g., `WHERE YEAR(Date) = 2023`) that prevent index usage.',
+        example: 'I once debugged a report where a query slowed down significantly. By examining the execution plan, I found it was performing a full table scan because the statistics were outdated. Running `UPDATE STATISTICS` refreshed the optimizer\'s view of the data distribution, allowing it to use the correct index again.'
+      },
+      {
+        id: 'sql-37',
+        question: 'You are analyzing time-series data and notice missing days in your trend chart. How would you identify and fill those gaps in SQL?',
+        concepts: '**Recursive CTE**, **Calendar Table**, **LEFT JOIN**, **COALESCE**. Handling sparse data.',
+        answer: 'Transactional data is often sparse (no sales on some days). To fill gaps, you need a continuous source of dates.\n1.  **Generate Dates**: Use a **Recursive CTE** or a **Calendar Table** to generate a continuous list of dates for the desired range.\n2.  **LEFT JOIN**: Select from your generated dates and `LEFT JOIN` your actual data. This ensures every day appears in the result.\n3.  **Handle NULLs**: Use `COALESCE(SalesAmount, 0)` to replace the `NULL`s (for missing days) with 0.',
+        example: '---CODE_START---sql\n-- Generate dates using a recursive CTE\nWITH DateSeries AS (\n    SELECT CAST(\'2023-01-01\' AS DATE) AS DateValue\n    UNION ALL\n    SELECT DATEADD(day, 1, DateValue)\n    FROM DateSeries\n    WHERE DateValue < \'2023-01-31\'\n)\nSELECT \n    d.DateValue,\n    COALESCE(SUM(s.Amount), 0) as TotalSales\nFROM DateSeries d\nLEFT JOIN Sales s ON d.DateValue = s.SaleDate\nGROUP BY d.DateValue;\n---CODE_END---'
+      },
+      {
+        id: 'sql-38',
+        question: 'You need to calculate running totals and month-over-month growth for revenue. How would you build that logic in SQL?',
+        concepts: '**Window Functions**, **SUM() OVER**, **LAG()**, **CTEs**. Cumulative metrics and comparative analysis.',
+        answer: 'This requires two specific window functions.\n1.  **Running Total**: Use `SUM(Revenue) OVER (ORDER BY Date)` to calculate the cumulative sum up to the current row.\n2.  **MoM Growth**: Use `LAG(Revenue) OVER (ORDER BY Date)` to access the previous month\'s revenue. Then calculate `(Current - Previous) / Previous`.\nIt is best to wrap the monthly aggregation in a CTE first.',
+        example: '---CODE_START---sql\nWITH MonthlySales AS (\n    SELECT \n        FORMAT(SaleDate, \'yyyy-MM\') as SaleMonth,\n        SUM(Amount) as Revenue\n    FROM Sales\n    GROUP BY FORMAT(SaleDate, \'yyyy-MM\')\n)\nSELECT\n    SaleMonth,\n    Revenue,\n    SUM(Revenue) OVER (ORDER BY SaleMonth) as RunningTotal,\n    (Revenue - LAG(Revenue) OVER (ORDER BY SaleMonth)) / LAG(Revenue) OVER (ORDER BY SaleMonth) as MoM_Growth\nFROM MonthlySales;\n---CODE_END---'
+      },
+      {
+        id: 'sql-39',
+        question: 'Management wants to compare performance between Q1 and Q2 directly from the database. How would you structure that query?',
+        concepts: '**Conditional Aggregation**, **CASE WHEN**, **Pivoting**. Comparing distinct subsets of data side-by-side.',
+        answer: 'The most efficient way to compare specific periods side-by-side is using **Conditional Aggregation**.\nInstead of joining two separate queries (one for Q1 and one for Q2), you scan the table once and use `CASE WHEN` statements inside your `SUM` function to bucket the data into columns.',
+        example: '---CODE_START---sql\nSELECT\n    ProductCategory,\n    SUM(CASE WHEN Quarter = \'Q1\' THEN Revenue ELSE 0 END) as Q1_Revenue,\n    SUM(CASE WHEN Quarter = \'Q2\' THEN Revenue ELSE 0 END) as Q2_Revenue,\n    (SUM(CASE WHEN Quarter = \'Q2\' THEN Revenue ELSE 0 END) - SUM(CASE WHEN Quarter = \'Q1\' THEN Revenue ELSE 0 END)) as Diff\nFROM Sales\nWHERE Year = 2023\nGROUP BY ProductCategory;\n---CODE_END---'
+      },
+      {
+        id: 'sql-40',
+        question: 'You are asked to produce a report that shows both daily and weekly summaries from the same dataset. How would you aggregate data at multiple levels?',
+        concepts: '**GROUPING SETS**, **ROLLUP**, **CUBE**. Advanced aggregation techniques.',
+        answer: 'Standard SQL `GROUP BY` aggregates to a single level. To get multiple levels (e.g., daily AND weekly) in one result set, use `GROUPING SETS` or `ROLLUP`.\n- **ROLLUP**: Generates a hierarchy of subtotals (e.g., Daily -> Weekly -> Grand Total).\n- **GROUPING SETS**: Allows you to explicitly specify exactly which groups you want (e.g., just Daily and Weekly, without the Grand Total).',
+        example: '---CODE_START---sql\nSELECT \n    Week, \n    Day,\n    SUM(Sales) as TotalSales\nFROM SalesData\nGROUP BY GROUPING SETS (\n    (Week, Day), -- Daily totals\n    (Week),      -- Weekly totals\n    ()           -- Grand total\n);\n---CODE_END---'
+      },
+      {
+        id: 'sql-41',
+        question: 'You are building a report where filters (like region or category) can change dynamically. How would you make your SQL adaptable?',
+        concepts: '**Dynamic SQL**, **Coalesce**, **Optional Parameters**. Handling flexible search criteria.',
+        answer: 'In stored procedures or parameterized queries, you handle optional filters by checking if the parameter is `NULL`.\nThe logic `WHERE (@Parameter IS NULL OR Column = @Parameter)` allows the filter to be ignored if the user doesn\'t provide a value, returning all rows for that column.',
+        example: '---CODE_START---sql\nCREATE PROCEDURE GetSales\n    @Region VARCHAR(50) = NULL,\n    @Category VARCHAR(50) = NULL\nAS\nBEGIN\n    SELECT * FROM Sales\n    WHERE (@Region IS NULL OR Region = @Region)\n      AND (@Category IS NULL OR Category = @Category);\nEND\n---CODE_END---'
+      },
+      {
+        id: 'sql-42',
+        question: 'Indexing strategies are needed to improve the speed of analytical queries. How would you decide which columns to index?',
+        concepts: '**Cardinality**, **Selectivity**, **Covering Index**, **Clustered vs Non-Clustered**. Database optimization theory.',
+        answer: 'Deciding on indexes involves analyzing query patterns and data distribution:\n1.  **Filter Columns**: Index columns frequently used in `WHERE` clauses. High **selectivity** (unique values) columns are best.\n2.  **Join Columns**: Foreign keys used in `JOIN` conditions should almost always be indexed.\n3.  **Covering Indexes**: For critical queries, create an index that "covers" the query by including all selected columns (using `INCLUDE` in SQL Server). This avoids looking up the base table entirely.\n4.  **Avoid Over-indexing**: Indexes speed up reads (`SELECT`) but slow down writes (`INSERT`/`UPDATE`). Do not index low-cardinality columns like "Gender" unless they are part of a composite index.',
+        example: 'In a recent project, I analyzed the slow queries and found that `OrderDate` and `CustomerID` were frequently used in WHERE clauses. I added a composite index on these columns. I avoided indexing the `Status` column alone because it had low cardinality (only 3 unique values), which would not have provided significant performance benefits.'
+      },
+      {
+        id: 'sql-43',
+        question: 'You need to create a performance report that categorizes sales based on thresholds (e.g., Low, Medium, High). How would you write this using CASE statements?',
+        concepts: '**CASE statement**, **Bucketing**, **Segmentation**. Transforming continuous data into categorical data.',
+        answer: 'The `CASE` statement allows you to implement if-then-else logic directly in your `SELECT` clause to create new categories on the fly.',
+        example: '---CODE_START---sql\nSELECT\n    OrderID,\n    Amount,\n    CASE\n        WHEN Amount < 100 THEN \'Low Value\'\n        WHEN Amount >= 100 AND Amount < 500 THEN \'Medium Value\'\n        ELSE \'High Value\'\n    END as SalesCategory\nFROM Orders;\n---CODE_END---'
       }
     ],
 };

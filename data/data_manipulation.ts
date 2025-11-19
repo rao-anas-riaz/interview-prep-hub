@@ -160,6 +160,13 @@ const dataManipulationCategory: QuestionCategory = {
             answer: '---CODE_START---python\nimport pandas as pd\nimport numpy as np\n\n# Create a sample time series DataFrame\ndates = pd.to_datetime(pd.date_range(\'2023-01-01\', periods=10, freq=\'D\'))\ndata = {\'Sales\': [10, 12, 15, 11, 13, 20, 22, 21, 25, 28]}\ndf = pd.DataFrame(data, index=dates)\n\n# Calculate the 3-day rolling average of Sales\n# The first two values will be NaN because the window is not full yet\ndf[\'Rolling_Avg_3D\'] = df[\'Sales\'].rolling(window=3).mean()\n\nprint(df)\n---CODE_END---',
             example: '**Code Explanation**:\nPandas makes this complex operation very simple with the `.rolling()` method. \n- `df[\'Sales\'].rolling(window=3)` creates a `Rolling` object. It doesn\'t compute anything yet; it just defines a sliding window of size 3 over the `Sales` Series.\n- Chaining `.mean()` to it tells pandas to apply the mean function to each of these 3-period windows. For the date \'2023-01-03\', the window contains [10, 12, 15] and the result is their average, 12.33. For \'2023-01-04\', the window slides to [12, 15, 11], and so on.'
         },
+        {
+            id: 'pyds-21',
+            question: 'What is Pandas? How is it useful for data wrangling?',
+            concepts: '**Library Architecture**, **Data Structures**. A foundational question for any data role.',
+            answer: 'Pandas is an open-source Python library providing high-performance, easy-to-use data structures and data analysis tools.\n\nIt is useful for data wrangling because it offers:\n- **DataFrame Object**: A powerful 2D table object for data manipulation.\n- **File Support**: Easy reading/writing from CSV, Excel, SQL, JSON, etc.\n- **Cleaning Tools**: Functions to handle missing data, duplicates, and data type conversions.\n- **Merging/Joining**: SQL-like capabilities to combine datasets.',
+            example: 'Instead of writing complex Python loops to parse a CSV file and calculate an average, you can do it in two lines: `df = pd.read_csv("data.csv")` and `print(df["sales"].mean())`.'
+        }
     ],
 };
 

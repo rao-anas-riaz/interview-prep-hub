@@ -209,6 +209,20 @@ const pythonCoreCategory: QuestionCategory = {
             answer: '---CODE_START---python\ndef find_min_max(data_list):\n    # Handle edge case of an empty list\n    if not data_list:\n        return None, None\n    \n    # Initialize smallest and largest with the first element\n    smallest = data_list[0]\n    largest = data_list[0]\n    \n    # Iterate through the rest of the list\n    for num in data_list[1:]:\n        if num < smallest:\n            smallest = num\n        elif num > largest:\n            largest = num\n            \n    return smallest, largest\n\nmy_list = [64, 34, 25, 12, 22, 11, 90]\ns, l = find_min_max(my_list)\nprint(f"Smallest: {s}, Largest: {l}")\n---CODE_END---',
             example: '**Code Explanation**:\nThe function first checks for an empty list to avoid errors. It then initializes `smallest` and `largest` to the first item. The `for` loop iterates from the *second* item (`data_list[1:]`). In each iteration, it checks if the current `num` is smaller than the current `smallest` or larger than the current `largest` and updates the respective variable if the condition is true.'
         },
+        {
+            id: 'pychal-30',
+            question: 'Write a function to take a user-input list and return the sum of elements.',
+            concepts: '**Iteration**, **Accumulation**. A basic logic test often asked to beginners.',
+            answer: 'You can iterate through the list and add each element to a running total variable.\n\n---CODE_START---python\ndef sum_list(items):\n    total = 0\n    for item in items:\n        total += item\n    return total\n\n# Example\nprint(sum_list([1, 2, 3, 4, 5])) # Output: 15\n---CODE_END---',
+            example: 'While Python has a built-in `sum()` function, writing this loop manually demonstrates your understanding of basic control flow.'
+        },
+        {
+            id: 'pychal-31',
+            question: 'Write a program to check and count vowels in a string.',
+            concepts: '**String Traversal**, **Conditionals**, **Sets**. Good for testing basic string manipulation skills.',
+            answer: 'You can loop through each character in the string and check if it exists in a set of defined vowels.\n\n---CODE_START---python\ndef count_vowels(text):\n    vowels = "aeiouAEIOU"\n    count = 0\n    for char in text:\n        if char in vowels:\n            count += 1\n    return count\n\nprint(count_vowels("Hello World")) # Output: 3\n---CODE_END---',
+            example: 'Using a string `"aeiouAEIOU"` or a set `{\'a\', \'e\', ...}` makes the check `if char in vowels` very efficient and readable.'
+        }
     ],
 };
 

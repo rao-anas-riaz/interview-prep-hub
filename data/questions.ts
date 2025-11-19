@@ -62,6 +62,12 @@ export const categoryMetadata: QuestionCategoryMetadata[] = [
     description: 'Comprehensive questions on Power BI, from data modeling and DAX to visualization and performance optimization.',
   },
   {
+    id: 'data_engineering',
+    title: 'Data Engineering & Architecture',
+    icon: 'fa-sitemap',
+    description: 'Design and implementation of data pipelines, storage systems, and large-scale data processing architectures.',
+  },
+  {
     id: 'mlops_deployment',
     title: 'MLOps & System Design',
     icon: 'fa-cogs',
