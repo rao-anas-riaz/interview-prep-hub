@@ -13,7 +13,7 @@ const sqlCategory: QuestionCategory = {
         id: 'sql-1',
         question: 'What is the Order of Execution in an SQL query?',
         concepts: '**Logical Query Processing**: The sequence in which the database engine executes clauses, which differs from the order you write them.\n\n**The 7 Steps:**\n1. **FROM/JOIN**: Identifies tables and creates the working dataset.\n2. **WHERE**: Filters individual rows based on conditions. *Crucial: Aliases created later do not exist here.*\n3. **GROUP BY**: Aggregates rows into buckets.\n4. **HAVING**: Filters the aggregated buckets.\n5. **SELECT**: Computes columns, functions, and creates **Aliases**.\n6. **ORDER BY**: Sorts the final result.\n7. **LIMIT/OFFSET**: Discards rows to return a specific subset.',
-        [cite_start]answer: 'You must understand that the **SELECT** clause (where you name your columns) runs **after** the **WHERE** clause[cite: 1]. This is why you cannot use a column alias inside the WHERE clause—the engine hasn\'t created it yet. To fix this, you must either repeat the calculation in the WHERE clause or use a derived table (CTE/Subquery) to "materialize" the alias first.',
+        answer: 'You must understand that the **SELECT** clause (where you name your columns) runs **after** the **WHERE** clause. This is why you cannot use a column alias inside the WHERE clause—the engine hasn\'t created it yet. To fix this, you must either repeat the calculation in the WHERE clause or use a derived table (CTE/Subquery) to "materialize" the alias first.',
         example: '---CODE_START---sql\n-- SCENARIO: Filter sales where the calculated Tax is > 5.\n\n-- WRONG (Will Error): "Tax" does not exist when WHERE runs.\nSELECT Price * 0.1 AS Tax\nFROM Sales\nWHERE Tax > 5;\n\n-- CORRECT (Option 1): Repeat the math.\nSELECT Price * 0.1 AS Tax\nFROM Sales\nWHERE (Price * 0.1) > 5;\n\n-- CORRECT (Option 2 - Best for complex logic): Use a CTE.\nWITH CalculatedData AS (\n    -- The CTE runs first, creating the "Tax" column.\n    SELECT Price * 0.1 AS Tax \n    FROM Sales\n)\n-- Now the outer query sees "Tax" as a real column.\nSELECT * \nFROM CalculatedData \nWHERE Tax > 5;\n---CODE_END---',
         whatIfs: [
             '**What if you want to filter by the alias without a CTE?**\nSome databases (like MySQL/Postgres) allow aliases in `GROUP BY` or `HAVING`, but `WHERE` is strictly forbidden. You can force it by wrapping it in a subquery.\n---CODE_START---sql\nSELECT * \nFROM (\n  SELECT Price * 0.1 AS Tax FROM Sales\n) t\nWHERE Tax > 5;\n---CODE_END---'
@@ -23,7 +23,7 @@ const sqlCategory: QuestionCategory = {
         id: 'sql-2',
         question: 'What is the difference between COUNT(*), COUNT(col), and COUNT(DISTINCT)?',
         concepts: '**Aggregation Functions**: Functions that calculate a single result from a set of input values.\n\n**The Definitions**:\n* **COUNT(*)**: Counts the cardinality (number of rows) of the result set. It **includes NULLs** and duplicates.\n* **COUNT(column)**: Counts the number of **non-NULL** values in a specific column. It ignores NULLs but counts duplicates.\n* **COUNT(DISTINCT column)**: Counts the number of **unique, non-NULL** values. It ignores duplicates and NULLs.',
-        answer: 'The key difference is **NULL handling**. [cite_start]If you need the total number of records (e.g., "Total Users"), always use `COUNT(*)`[cite: 2]. If you need to know how many users have entered a specific field (e.g., "Users with a Phone Number"), use `COUNT(phone)`. If you need to know how many unique categories exist, use `COUNT(DISTINCT category)`.',
+        answer: 'The key difference is **NULL handling**. If you need the total number of records (e.g., "Total Users"), always use `COUNT(*)`. If you need to know how many users have entered a specific field (e.g., "Users with a Phone Number"), use `COUNT(phone)`. If you need to know how many unique categories exist, use `COUNT(DISTINCT category)`.',
         example: '---CODE_START---sql\n-- Table: Users (5 rows total)\n-- 1. Bob (Email: bob@test.com)\n-- 2. Bob (Email: bob@test.com) <- Duplicate\n-- 3. Alice (Email: alice@test.com)\n-- 4. John (Email: NULL)\n-- 5. Dave (Email: NULL)\n\nSELECT \n    COUNT(*) AS TotalRows,              -- Returns 5 (Counts everything)\n    COUNT(Email) AS ValidEmails,        -- Returns 3 (Ignores the 2 NULLs)\n    COUNT(DISTINCT Email) AS UniqueUsers -- Returns 2 (Bob, Alice. Ignores duplicates & NULLs)\nFROM Users;\n---CODE_END---',
         whatIfs: [
             '**What if you want to count the number of NULLs?**\nYou calculate the difference between the total rows and the non-null rows.\n---CODE_START---sql\nSELECT COUNT(*) - COUNT(Email) AS NullEmailCount\nFROM Users;\n---CODE_END---',
@@ -33,7 +33,7 @@ const sqlCategory: QuestionCategory = {
       {
         id: 'sql-3',
         question: 'Explain the difference between WHERE and HAVING.',
-        concepts: '**Filtering**: The process of removing unwanted data.\n\n**The Definitions**:\n* **WHERE Clause**: A **Row-Level Filter**. [cite_start]It runs *before* data is grouped[cite: 1, 2]. It restricts which records are fed into the aggregation.\n* **HAVING Clause**: A **Group-Level Filter**. [cite_start]It runs *after* data is grouped[cite: 1, 2]. It restricts which aggregated buckets are displayed.\n* **Aggregate Functions**: `SUM`, `AVG`, `COUNT`, `MAX`. These **cannot** be used in `WHERE`.',
+        concepts: '**Filtering**: The process of removing unwanted data.\n\n**The Definitions**:\n* **WHERE Clause**: A **Row-Level Filter**. It runs *before* data is grouped. It restricts which records are fed into the aggregation.\n* **HAVING Clause**: A **Group-Level Filter**. It runs *after* data is grouped. It restricts which aggregated buckets are displayed.\n* **Aggregate Functions**: `SUM`, `AVG`, `COUNT`, `MAX`. These **cannot** be used in `WHERE`.',
         answer: 'Use `WHERE` to filter raw data (e.g., "Last Year\'s Sales"). Use `HAVING` to filter calculated data (e.g., "Total Sales > $10k"). You often use them together: `WHERE` reduces the dataset size immediately (performance optimization), and `HAVING` applies the business logic rules to the final results.',
         example: '---CODE_START---sql\n-- GOAL: Find Departments with total salaries > $500k, excluding Interns.\n\nSELECT Department, SUM(Salary) as TotalSalary\nFROM Employees\n-- Step 1 (WHERE): Filter ROWS. Remove Interns before calculating.\nWHERE JobTitle <> \'Intern\'  \n-- Step 2: Aggregate the remaining rows.\nGROUP BY Department         \n-- Step 3 (HAVING): Filter GROUPS. Check the sum.\nHAVING SUM(Salary) > 500000;\n---CODE_END---',
         whatIfs: [
@@ -43,8 +43,8 @@ const sqlCategory: QuestionCategory = {
       {
         id: 'sql-4',
         question: 'What is the difference between UNION and UNION ALL?',
-        [cite_start]concepts: '**Set Operators**: Commands that combine the result sets of two or more SELECT queries into a single result set.\n\n**The Definitions**:\n* **UNION**: Combines results and **removes duplicates**[cite: 7]. [cite_start]It performs a `DISTINCT` operation (sorting/hashing) implicitly.\n* **UNION ALL**: Combines results and **keeps duplicates**[cite: 7]. It simply appends the second dataset to the first.\n* **Prerequisites**: Both queries must have the same number of columns in the same order, with compatible data types.',
-        [cite_start]answer: 'Always default to `UNION ALL` for performance[cite: 9]. [cite_start]The duplicate removal process in `UNION` is computationally expensive (requires sorting)[cite: 8]. Only use `UNION` if your business logic strictly requires a unique list and you cannot achieve it via upstream filtering.',
+        concepts: '**Set Operators**: Commands that combine the result sets of two or more SELECT queries into a single result set.\n\n**The Definitions**:\n* **UNION**: Combines results and **removes duplicates**. It performs a `DISTINCT` operation (sorting/hashing) implicitly.\n* **UNION ALL**: Combines results and **keeps duplicates**. It simply appends the second dataset to the first.\n* **Prerequisites**: Both queries must have the same number of columns in the same order, with compatible data types.',
+        answer: 'Always default to `UNION ALL` for performance. The duplicate removal process in `UNION` is computationally expensive (requires sorting). Only use `UNION` if your business logic strictly requires a unique list and you cannot achieve it via upstream filtering.',
         example: '---CODE_START---sql\n-- SCENARIO: Combine Historical Archives with Current Data.\n\n-- Use UNION ALL because a record in 2022 cannot exist in 2023.\n-- Checking for duplicates is a waste of time here.\nSELECT Date, Sales FROM Sales_2022\nUNION ALL\nSELECT Date, Sales FROM Sales_2023;\n\n-- SCENARIO: Get a list of all unique customer emails from two different apps.\n-- Use UNION because the same user might exist in both apps.\nSELECT Email FROM App1_Users\nUNION\nSELECT Email FROM App2_Users;\n---CODE_END---',
         whatIfs: [
             '**What if the columns have different names?**\nSQL only cares about the **position** (1st column, 2nd column). The result will take the column names from the *first* query.\n---CODE_START---sql\nSELECT FullName FROM Users -- Result column will be called "FullName"\nUNION ALL\nSELECT UserName FROM Admins; -- This is valid if data types match\n---CODE_END---'
@@ -67,8 +67,8 @@ const sqlCategory: QuestionCategory = {
       {
         id: 'sql-6',
         question: 'How do you find duplicate records (e.g., duplicate emails)?',
-        [cite_start]concepts: '**Data Quality**: Identifying redundant entries in a dataset.\n**Grouping Pattern**: The standard technique for finding frequency.\n\n**The Definitions**:\n* **GROUP BY**: Collapses identical values into a single row [cite: 23][cite_start].\n* **HAVING**: Filters groups based on an aggregate condition[cite: 23].\n* **Frequency Distribution**: Counting how many times each unique value appears.',
-        [cite_start]answer: 'To find duplicates, you group the data by the unique key (e.g., Email) and count the size of each group[cite: 24]. If the count is greater than 1, the email is a duplicate.',
+        concepts: '**Data Quality**: Identifying redundant entries in a dataset.\n**Grouping Pattern**: The standard technique for finding frequency.\n\n**The Definitions**:\n* **GROUP BY**: Collapses identical values into a single row.\n* **HAVING**: Filters groups based on an aggregate condition.\n* **Frequency Distribution**: Counting how many times each unique value appears.',
+        answer: 'To find duplicates, you group the data by the unique key (e.g., Email) and count the size of each group. If the count is greater than 1, the email is a duplicate.',
         example: '---CODE_START---sql\n-- GOAL: Identify emails that appear more than once.\n\nSELECT \n    email, \n    COUNT(*) as frequency\nFROM users\nGROUP BY email\n-- Filter to show only buckets with > 1 item\nHAVING COUNT(*) > 1;\n---CODE_END---',
         whatIfs: [
             '**What if you want to find the IDs associated with these duplicates?**\nYou cannot do this in a simple GROUP BY. You need a Window Function or Self Join.\n---CODE_START---sql\nSELECT *\nFROM (\n    SELECT *, COUNT(*) OVER(PARTITION BY email) as cnt\n    FROM users\n) t\nWHERE cnt > 1;\n---CODE_END---'
@@ -77,7 +77,7 @@ const sqlCategory: QuestionCategory = {
       {
         id: 'sql-7',
         question: 'How do you delete duplicate rows while keeping the one with the lowest/highest ID?',
-        [cite_start]concepts: '**De-duplication**: The process of removing redundant copies while retaining one "Golden Record".\n**Window Functions (Row_Number)**: Assigning a sequential integer to rows within a partition[cite: 54].\n**CTE (Common Table Expression)**: A temporary named result set.',
+        concepts: '**De-duplication**: The process of removing redundant copies while retaining one "Golden Record".\n**Window Functions (Row_Number)**: Assigning a sequential integer to rows within a partition.\n**CTE (Common Table Expression)**: A temporary named result set.',
         answer: 'The most efficient strategy is to "Rank and Delete". We define a "Partition" (the group of duplicates) and an "Order" (which one we want to keep). We assign Rank 1 to the keeper and Rank 2+ to the duplicates. Then we delete anything with Rank > 1.',
         example: '---CODE_START---sql\n-- GOAL: Keep the User with the LOWEST ID, delete the rest.\n\nWITH RankedUsers AS (\n    SELECT \n        ID, \n        Email,\n        -- Partition by Email (Group duplicates)\n        -- Order by ID ASC (Lowest ID gets RowNum 1)\n        ROW_NUMBER() OVER(PARTITION BY Email ORDER BY ID ASC) as rn\n    FROM Users\n)\n-- Delete rows where rank is 2, 3, 4...\nDELETE FROM RankedUsers \nWHERE rn > 1;\n---CODE_END---',
         whatIfs: [
@@ -87,8 +87,8 @@ const sqlCategory: QuestionCategory = {
       {
         id: 'sql-8',
         question: 'How do you Pivot data (Rows to Columns) without a PIVOT function?',
-        [cite_start]concepts: '**Pivoting**: Transforming data from a long format (rows) to a wide format (columns).\n**Conditional Aggregation**: Using a `CASE` statement inside an aggregate function (SUM, MAX, COUNT)[cite: 116].\n**Portability**: This method works in almost every SQL dialect (MySQL, Postgres, SQL Server, Oracle).',
-        answer: 'You "bucket" the data manually. [cite_start]You scan the table once, and for each row, the `CASE` statement decides which column bucket the value belongs to[cite: 118]. If it matches the condition, you add the value; if not, you add 0 (or NULL).',
+        concepts: '**Pivoting**: Transforming data from a long format (rows) to a wide format (columns).\n**Conditional Aggregation**: Using a `CASE` statement inside an aggregate function (SUM, MAX, COUNT)].\n**Portability**: This method works in almost every SQL dialect (MySQL, Postgres, SQL Server, Oracle).',
+        answer: 'You "bucket" the data manually. You scan the table once, and for each row, the `CASE` statement decides which column bucket the value belongs to. If it matches the condition, you add the value; if not, you add 0 (or NULL).',
         example: '---CODE_START---sql\n-- GOAL: Turn rows of (Year, Sales) into columns [Sales_2023, Sales_2024]\n\nSELECT \n    ProductID,\n    -- Bucket 1: 2023 Sales\n    SUM(CASE WHEN Year = 2023 THEN SalesAmount ELSE 0 END) AS Sales_2023,\n    -- Bucket 2: 2024 Sales\n    SUM(CASE WHEN Year = 2024 THEN SalesAmount ELSE 0 END) AS Sales_2024\nFROM Sales\nGROUP BY ProductID;\n---CODE_END---',
         whatIfs: [
             '**What if you have dynamic columns (e.g., unknown number of years)?**\nStandard SQL cannot handle dynamic columns. You would need to use **Dynamic SQL** (Stored Procedure generating a string) or handle the pivoting in your application layer (Python/Pandas).\n---CODE_START---sql\n-- Dynamic SQL Concept (Pseudo-code)\nEXEC(\'SELECT ... \' + @GeneratedColumns + \' FROM ...\')\n---CODE_END---'
@@ -111,8 +111,8 @@ const sqlCategory: QuestionCategory = {
       {
         id: 'sql-10',
         question: 'Find employees who earn more than their managers.',
-        [cite_start]concepts: '**Self-Join**: A join where a table is joined with itself [cite: 18][cite_start].\n**Aliasing**: Giving temporary names (e.g., `e`, `m`) to table instances to distinguish them[cite: 19].\n**Hierarchical Data**: Data where rows have parent-child relationships within the same table.',
-        answer: 'Since the "Employee" and the "Manager" are both stored in the `Employees` table, we imagine we have two copies of the table. We alias one as `Emp` (the subordinate) and one as `Mgr` (the boss). [cite_start]We join them where `Emp.ManagerID` equals `Mgr.EmployeeID`[cite: 20].',
+        concepts: '**Self-Join**: A join where a table is joined with itself.\n**Aliasing**: Giving temporary names (e.g., `e`, `m`) to table instances to distinguish them.\n**Hierarchical Data**: Data where rows have parent-child relationships within the same table.',
+        answer: 'Since the "Employee" and the "Manager" are both stored in the `Employees` table, we imagine we have two copies of the table. We alias one as `Emp` (the subordinate) and one as `Mgr` (the boss). We join them where `Emp.ManagerID` equals `Mgr.EmployeeID`.',
         example: '---CODE_START---sql\nSELECT \n    e.Name AS EmployeeName,\n    e.Salary AS EmpSalary,\n    m.Name AS ManagerName,\n    m.Salary AS MgrSalary\nFROM Employees e         -- Instance 1: The Worker\nJOIN Employees m         -- Instance 2: The Boss\n  ON e.ManagerID = m.ID  -- Connect Worker to Boss\nWHERE e.Salary > m.Salary; -- The Filter Condition\n---CODE_END---',
         whatIfs: [
             '**What if you want to find employees with NO manager?**\nA standard JOIN drops NULLs. You do not need a join for this.\n---CODE_START---sql\nSELECT * FROM Employees WHERE ManagerID IS NULL;\n---CODE_END---',
@@ -412,7 +412,7 @@ const sqlCategory: QuestionCategory = {
             '**What if you need to return a table to be used in a JOIN?**\nYou cannot join a Procedure. You must use a **Table-Valued Function (TVF)** instead.\n---CODE_START---sql\nSELECT * FROM Users u \nJOIN dbo.GetRecentOrders(u.ID) f ON ...\n---CODE_END---'
         ]
       }
-    ]
+    ],
 };
 
 export default sqlCategory;
