@@ -166,7 +166,6 @@ const sqlCategory: QuestionCategory = {
       // ---------------------------------------------------------
       // LEVEL 4: WINDOW FUNCTIONS (The Power Tools)
       // ---------------------------------------------------------
-      ,
       {
         id: 'sql-15',
         question: 'Explain RANK vs DENSE_RANK using a race analogy.',
