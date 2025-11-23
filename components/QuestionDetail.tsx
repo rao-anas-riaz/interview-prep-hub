@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { InterviewQuestion } from '../types';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
@@ -94,6 +95,12 @@ const QuestionDetail: React.FC<QuestionDetailProps> = ({ question }) => {
           <DetailSection title="Example">
               {renderFormattedText(question.example)}
           </DetailSection>
+
+          {question.whatIf && (
+            <DetailSection title="What If Scenario">
+                {renderFormattedText(question.whatIf)}
+            </DetailSection>
+          )}
       </div>
     </div>
   );
