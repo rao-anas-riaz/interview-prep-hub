@@ -189,10 +189,6 @@ const sqlCategory: QuestionCategory = {
             '**What if you want the lowest selling product?**\nChange the Window Function to `ORDER BY Sales ASC`. Then filter `WHERE rnk = 1`.'
         ]
       },
-      
-
-[Image of SQL Window Frames]
-,
       {
         id: 'sql-17',
         question: 'Calculate a Rolling 7-Day Average (The Window Frame).',
