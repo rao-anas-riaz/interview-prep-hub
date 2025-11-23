@@ -96,9 +96,15 @@ const QuestionDetail: React.FC<QuestionDetailProps> = ({ question }) => {
               {renderFormattedText(question.example)}
           </DetailSection>
 
-          {question.whatIf && (
-            <DetailSection title="What If Scenario">
-                {renderFormattedText(question.whatIf)}
+          {question.whatIfs && question.whatIfs.length > 0 && (
+            <DetailSection title="What If Scenarios">
+                <ul className="list-disc pl-5 space-y-4">
+                  {question.whatIfs.map((scenario, index) => (
+                    <li key={index}>
+                      {renderFormattedText(scenario)}
+                    </li>
+                  ))}
+                </ul>
             </DetailSection>
           )}
       </div>
