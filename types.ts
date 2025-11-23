@@ -1,9 +1,11 @@
+
 export interface InterviewQuestion {
   id: string;
   question: string;
   concepts: string;
   answer: string;
   example: string;
+  whatIf?: string;
 }
 
 export interface QuestionCategoryMetadata {
