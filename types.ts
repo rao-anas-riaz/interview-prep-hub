@@ -5,7 +5,7 @@ export interface InterviewQuestion {
   concepts: string;
   answer: string;
   example: string;
-  whatIf?: string;
+  whatIfs?: string[];
 }
 
 export interface QuestionCategoryMetadata {
